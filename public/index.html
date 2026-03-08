@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Easy - Property Rental Platform</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landing-page" class="page active">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-home"></i>
+                        <span>Rent Easy</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="showPage('login-page')">Get Started</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="container">
+                <h1>Find Your Perfect Rental Home in Hyderabad</h1>
+                <p>Connect property owners with tenants seamlessly. List your property or find your dream home in minutes.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-lg" onclick="showPage('login-page')">
+                        <i class="fas fa-search"></i> Find a Property
+                    </button>
+                    <button class="btn btn-outline btn-lg" onclick="showPage('login-page')">
+                        <i class="fas fa-upload"></i> List Your Property
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2>Why Choose Rent Easy?</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <h3>Wide Selection</h3>
+                        <p>Browse through hundreds of verified properties in Hyderabad from apartments to luxury villas.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Secure & Trusted</h3>
+                        <p>All properties and users are verified to ensure safe and reliable transactions.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h3>Easy to Use</h3>
+                        <p>Simple interface for property owners to list and tenants to search and connect.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Rent Easy. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Login/Register Page -->
+    <div id="login-page" class="page">
+        <div class="login-container">
+            <div class="login-decorations">
+                <div class="decoration-circle circle-1"></div>
+                <div class="decoration-circle circle-2"></div>
+                <div class="decoration-circle circle-3"></div>
+            </div>
+            
+            <div class="login-header">
+                <div class="logo">
+                    <i class="fas fa-home"></i>
+                    <span>Rent Easy</span>
+                </div>
+            </div>
+
+            <div class="login-card">
+                <div class="login-card-header">
+                    <div class="login-icon">
+                        <i class="fas fa-sparkles"></i>
+                    </div>
+                    <h2 id="auth-title">Welcome to Rent Easy</h2>
+                    <p id="auth-subtitle">Create your account to continue</p>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="tenant" onclick="switchTab('tenant')">
+                        <i class="fas fa-users"></i> I'm a Tenant
+                    </button>
+                    <button class="tab-btn" data-tab="owner" onclick="switchTab('owner')">
+                        <i class="fas fa-user-tie"></i> I'm an Owner
+                    </button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- Tenant Form -->
+                    <div id="tenant-form" class="auth-form active">
+                        <form onsubmit="handleAuth(event, 'tenant')">
+                            <div class="form-group" id="tenant-name-group">
+                                <label for="tenant-name">Full Name *</label>
+                                <input type="text" id="tenant-name" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenant-email">Email *</label>
+                                <input type="email" id="tenant-email" placeholder="tenant@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenant-password">Password *</label>
+                                <input type="password" id="tenant-password" placeholder="Enter your password" required minlength="6">
+                            </div>
+                            <div class="form-group">
+                                <label for="tenant-phone">Phone Number *</label>
+                                <input type="tel" id="tenant-phone" placeholder="+91 98765-43210" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                <span id="tenant-btn-text">Create Tenant Account</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Owner Form -->
+                    <div id="owner-form" class="auth-form">
+                        <form onsubmit="handleAuth(event, 'owner')">
+                            <div class="form-group" id="owner-name-group">
+                                <label for="owner-name">Full Name *</label>
+                                <input type="text" id="owner-name" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="owner-email">Email *</label>
+                                <input type="email" id="owner-email" placeholder="owner@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="owner-password">Password *</label>
+                                <input type="password" id="owner-password" placeholder="Enter your password" required minlength="6">
+                            </div>
+                            <div class="form-group">
+                                <label for="owner-phone">Phone Number *</label>
+                                <input type="tel" id="owner-phone" placeholder="+91 98765-43210" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                <span id="owner-btn-text">Create Owner Account</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="auth-toggle">
+                    <button type="button" onclick="toggleAuthMode()">
+                        <span id="auth-toggle-text">Already have an account? Sign in</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="login-footer">
+                Secure and trusted by thousands of users in Hyderabad
+            </div>
+        </div>
+    </div>
+
+    <!-- Owner Dashboard -->
+    <div id="owner-dashboard" class="page">
+        <header class="header dashboard-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-home"></i>
+                        <span>Rent Easy</span>
+                    </div>
+                    <div class="header-right">
+                        <span class="welcome-text">Welcome, <span id="owner-name-display"></span></span>
+                        <button class="btn btn-outline btn-sm" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <div class="container">
+                <div class="dashboard-header-section">
+                    <h1>My Properties</h1>
+                    <button class="btn btn-primary" onclick="showAddPropertyModal()">
+                        <i class="fas fa-plus"></i> Add New Property
+                    </button>
+                </div>
+
+                <div id="owner-properties-grid" class="properties-grid">
+                    <!-- Properties will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tenant Dashboard -->
+    <div id="tenant-dashboard" class="page">
+        <header class="header dashboard-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-home"></i>
+                        <span>Rent Easy</span>
+                    </div>
+                    <div class="header-right">
+                        <span class="welcome-text">Welcome, <span id="tenant-name-display"></span></span>
+                        <button class="btn btn-outline btn-sm" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <div class="container">
+                <h1>Available Properties in Hyderabad</h1>
+
+                <div class="filters">
+                    <input type="text" id="search-input" placeholder="Search by location in Hyderabad..." onkeyup="filterProperties()">
+                    <select id="type-filter" onchange="filterProperties()">
+                        <option value="">All Types</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="House">House</option>
+                        <option value="Studio">Studio</option>
+                        <option value="Villa">Villa</option>
+                    </select>
+                </div>
+
+                <div id="tenant-properties-grid" class="properties-grid">
+                    <!-- Properties will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Property Details Page -->
+    <div id="property-details" class="page">
+        <header class="header dashboard-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-home"></i>
+                        <span>Rent Easy</span>
+                    </div>
+                    <button class="btn btn-outline" onclick="goBackToDashboard()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="property-details-main">
+            <div class="container">
+                <div class="property-details-grid">
+                    <div class="property-details-left">
+                        <!-- Property Images Gallery -->
+                        <div class="property-images">
+                            <div id="main-image" class="main-image"></div>
+                            <div id="image-thumbnails" class="image-thumbnails"></div>
+                        </div>
+
+                        <!-- 3D View Section -->
+                        <div id="3d-view-section" class="details-card" style="display: none;">
+                            <h2><i class="fas fa-cube"></i> 3D Virtual Tour</h2>
+                            <div id="3d-view-container" class="view-3d-container"></div>
+                        </div>
+
+                        <!-- Nearby Places Images -->
+                        <div id="nearby-images-section" class="details-card" style="display: none;">
+                            <h2><i class="fas fa-map-marker-alt"></i> Nearby Places</h2>
+                            <div id="nearby-images-grid" class="nearby-images-grid"></div>
+                        </div>
+
+                        <!-- Food Courts Images -->
+                        <div id="food-court-section" class="details-card" style="display: none;">
+                            <h2><i class="fas fa-utensils"></i> Food Courts & Restaurants</h2>
+                            <div id="food-court-grid" class="nearby-images-grid"></div>
+                        </div>
+
+                        <!-- Title and Location -->
+                        <div class="property-title-section">
+                            <h1 id="detail-title"></h1>
+                            <p id="detail-location"></p>
+                        </div>
+
+                        <!-- Key Features -->
+                        <div class="details-card">
+                            <div id="detail-features" class="features-grid-detail"></div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="details-card">
+                            <h2>Description</h2>
+                            <p id="detail-description"></p>
+                        </div>
+
+                        <!-- Nearby Places List -->
+                        <div id="nearby-places-section" class="details-card" style="display: none;">
+                            <h2>Nearby Places</h2>
+                            <div id="nearby-places-list" class="nearby-places-list"></div>
+                        </div>
+
+                        <!-- Amenities -->
+                        <div class="details-card">
+                            <h2>Amenities</h2>
+                            <div id="detail-amenities" class="amenities-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="property-details-right">
+                        <div class="contact-card">
+                            <div class="price-section">
+                                <div id="detail-price" class="price-large"></div>
+                                <span class="price-period">per month</span>
+                            </div>
+
+                            <div class="divider"></div>
+
+                            <div class="owner-info">
+                                <h3>Property Owner</h3>
+                                <div id="detail-owner" class="owner-details"></div>
+                            </div>
+
+                            <div class="divider"></div>
+
+                            <div id="contact-section"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Property Modal -->
+    <div id="add-property-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2><i class="fas fa-home"></i> Add New Property</h2>
+                <button class="close-btn" onclick="closeAddPropertyModal()">&times;</button>
+            </div>
+            <form id="add-property-form" onsubmit="handleAddProperty(event)">
+                <div class="modal-body">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-info-circle"></i> Basic Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="prop-title">Property Title *</label>
+                                <input type="text" id="prop-title" placeholder="e.g., Modern 2BHK in Gachibowli" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prop-type">Property Type *</label>
+                                <select id="prop-type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Apartment">Apartment</option>
+                                    <option value="House">House</option>
+                                    <option value="Studio">Studio</option>
+                                    <option value="Villa">Villa</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prop-description">Description *</label>
+                            <textarea id="prop-description" rows="3" placeholder="Describe your property..." required></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="prop-price">Monthly Rent (₹) *</label>
+                                <input type="number" id="prop-price" placeholder="25000" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prop-city">City *</label>
+                                <input type="text" id="prop-city" value="Hyderabad" required readonly style="background: #f3f4f6;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prop-location">Full Address in Hyderabad *</label>
+                            <input type="text" id="prop-location" placeholder="e.g., Road No. 36, Jubilee Hills, Hyderabad" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="prop-bedrooms">Bedrooms *</label>
+                                <input type="number" id="prop-bedrooms" min="1" placeholder="2" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prop-bathrooms">Bathrooms *</label>
+                                <input type="number" id="prop-bathrooms" min="1" placeholder="2" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prop-area">Area (sq ft) *</label>
+                                <input type="number" id="prop-area" placeholder="1200" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prop-available">Available From *</label>
+                            <input type="date" id="prop-available" required>
+                        </div>
+                    </div>
+
+                    <!-- Property Images Upload -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-images"></i> Property Images *</h3>
+                        <p class="form-section-subtitle">Upload multiple images of your property (minimum 3 images required)</p>
+                        <div class="upload-box" id="property-upload-box">
+                            <input type="file" id="prop-images" accept="image/*" multiple style="display: none;" onchange="handlePropertyImages(event)">
+                            <div class="upload-box-content" onclick="document.getElementById('prop-images').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <h4>Upload Property Images</h4>
+                                <p>Click to browse or drag and drop</p>
+                                <span class="upload-hint">PNG, JPG up to 10MB each</span>
+                            </div>
+                            <div id="property-preview" class="upload-preview-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 3D View Upload -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-cube"></i> 3D Virtual Tour (Optional)</h3>
+                        <p class="form-section-subtitle">Upload a 3D model, GLB file, or 360° panoramic image</p>
+                        <div class="upload-box" id="3d-upload-box">
+                            <input type="file" id="prop-3d" accept=".glb,.gltf,image/*" style="display: none;" onchange="handle3DUpload(event)">
+                            <div class="upload-box-content" onclick="document.getElementById('prop-3d').click()">
+                                <i class="fas fa-cube"></i>
+                                <h4>Upload 3D View</h4>
+                                <p>Click to browse and upload</p>
+                                <span class="upload-hint">GLB, GLTF, or 360° panoramic image</span>
+                            </div>
+                            <div id="3d-preview" class="upload-preview-single"></div>
+                        </div>
+                    </div>
+
+                    <!-- Nearby Places Images -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-map-marker-alt"></i> Nearby Places Images (Optional)</h3>
+                        <p class="form-section-subtitle">Upload images of nearby locations like metro stations, malls, hospitals</p>
+                        <div class="upload-box" id="nearby-upload-box">
+                            <input type="file" id="nearby-images" accept="image/*" multiple style="display: none;" onchange="handleNearbyImages(event)">
+                            <div class="upload-box-content" onclick="document.getElementById('nearby-images').click()">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <h4>Upload Nearby Places</h4>
+                                <p>Click to browse or drag and drop</p>
+                                <span class="upload-hint">Images of metro, malls, hospitals, schools etc.</span>
+                            </div>
+                            <div id="nearby-preview" class="upload-preview-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Food Courts Images -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-utensils"></i> Food Courts & Restaurants (Optional)</h3>
+                        <p class="form-section-subtitle">Upload images of nearby food courts and restaurants</p>
+                        <div class="upload-box" id="food-upload-box">
+                            <input type="file" id="food-images" accept="image/*" multiple style="display: none;" onchange="handleFoodImages(event)">
+                            <div class="upload-box-content" onclick="document.getElementById('food-images').click()">
+                                <i class="fas fa-hamburger"></i>
+                                <h4>Upload Food Courts</h4>
+                                <p>Click to browse or drag and drop</p>
+                                <span class="upload-hint">Images of nearby restaurants and food courts</span>
+                            </div>
+                            <div id="food-preview" class="upload-preview-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Nearby Places List -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-list"></i> Nearby Places Details (Optional)</h3>
+                        <div id="nearby-places-container">
+                            <div class="nearby-place-input">
+                                <input type="text" class="nearby-place-name" placeholder="Place name (e.g., Hitech City Metro)">
+                                <input type="text" class="nearby-place-distance" placeholder="Distance (e.g., 500m)">
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addNearbyPlaceInput()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-check-circle"></i> Amenities *</h3>
+                        <div class="amenities-checkboxes">
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="WiFi"> <i class="fas fa-wifi"></i> WiFi
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Parking"> <i class="fas fa-parking"></i> Parking
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Gym"> <i class="fas fa-dumbbell"></i> Gym
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Swimming Pool"> <i class="fas fa-swimming-pool"></i> Swimming Pool
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Security"> <i class="fas fa-shield-alt"></i> 24/7 Security
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Garden"> <i class="fas fa-leaf"></i> Garden
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Laundry"> <i class="fas fa-tshirt"></i> Laundry
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Power Backup"> <i class="fas fa-bolt"></i> Power Backup
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Lift"> <i class="fas fa-elevator"></i> Lift
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Pet Friendly"> <i class="fas fa-paw"></i> Pet Friendly
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeAddPropertyModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-check"></i> Add Property
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="image-modal" class="modal">
+        <div class="image-modal-content">
+            <button class="image-modal-close" onclick="closeImageModal()">&times;</button>
+            <button class="image-modal-prev" onclick="prevModalImage()"><i class="fas fa-chevron-left"></i></button>
+            <img id="modal-image" src="" alt="Preview">
+            <button class="image-modal-next" onclick="nextModalImage()"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/script.js"></script>
+</body>
+</html>

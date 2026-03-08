@@ -1,0 +1,19 @@
+/* ── Register Page specific styles ───────────────────────────── */
+
+.benefits-box {
+  background: var(--orange-50);
+  border-radius: .75rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .875rem;
+  color: var(--orange-800);
+}
+.benefit-item svg { color: var(--orange-500); flex-shrink: 0; }
