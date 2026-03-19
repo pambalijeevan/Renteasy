@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discover Properties — Rent Easy</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/tenant-dashboard.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <a href="tenant-dashboard.html" class="logo">
+          <div class="logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/></svg>
+          </div>
+          <div class="logo-text">Rent Easy</div>
+        </a>
+        <span class="hide-mobile" style="display:flex;align-items:center;gap:.25rem;color:var(--gray-400);font-size:.8125rem;margin-left:.25rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          Hyderabad
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar-letter">?</div>
+          <span class="user-name" id="user-display-name">Loading...</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="handleLogout()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span class="hide-mobile">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top:2rem;padding-bottom:4rem;">
+
+    <!-- Page Header -->
+    <div style="margin-bottom:1.5rem;">
+      <h1 style="font-size:1.5rem;font-weight:700;color:var(--gray-900);">Discover Properties in Hyderabad</h1>
+      <p style="color:var(--gray-500);font-size:.875rem;margin-top:.25rem;" id="total-count">Browse verified rental listings</p>
+    </div>
+
+    <!-- Search Row -->
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Search by property name, area, type..." oninput="applyFilters()">
+        <button id="search-clear" class="search-clear hidden" onclick="clearSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <button class="btn filter-toggle-btn" id="filter-btn" onclick="toggleFilters()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        Filters
+        <span class="filter-badge hidden" id="filter-count">0</span>
+      </button>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel hidden" id="filter-panel">
+      <div class="filter-grid">
+        <div>
+          <label class="filter-label">Area</label>
+          <select id="f-area" class="form-select" style="padding:.5rem .75rem;font-size:.875rem;" onchange="applyFilters()">
+            <option value="">All Areas</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label">Type</label>
+          <select id="f-type" class="form-select" style="padding:.5rem .75rem;font-size:.875rem;" onchange="applyFilters()">
+            <option value="">All</option>
+            <option>Apartment</option><option>House</option><option>Villa</option>
+            <option>Studio</option><option>PG / Hostel</option><option>Office Space</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label">Max Rent (₹)</label>
+          <input type="number" id="f-price" class="form-input" style="padding:.5rem .75rem;font-size:.875rem;" placeholder="e.g. 30000" oninput="applyFilters()">
+        </div>
+        <div>
+          <label class="filter-label">Bedrooms</label>
+          <select id="f-beds" class="form-select" style="padding:.5rem .75rem;font-size:.875rem;" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option>1</option><option>2</option><option>3</option><option value="4+">4+</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label">Furnishing</label>
+          <select id="f-furnishing" class="form-select" style="padding:.5rem .75rem;font-size:.875rem;" onchange="applyFilters()">
+            <option value="">All</option>
+            <option>Fully Furnished</option><option>Semi-Furnished</option><option>Unfurnished</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-sm hidden" id="clear-filters-btn" onclick="clearFilters()" style="margin-top:.75rem;color:var(--red-500);font-weight:600;gap:.25rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear all filters
+      </button>
+    </div>
+
+    <!-- Results count -->
+    <div style="margin-bottom:1.25rem;">
+      <p style="color:var(--gray-600);font-size:.875rem;" id="results-count"></p>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-state" style="text-align:center;padding:5rem 0;">
+      <div class="spinner spinner-lg" style="margin:0 auto 1rem;"></div>
+      <p style="color:var(--gray-500);">Loading properties...</p>
+    </div>
+
+    <!-- Empty search result -->
+    <div id="empty-results" class="empty-state hidden">
+      <div class="empty-state-icon" style="background:var(--gray-100);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2" width="32" height="32"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:.5rem;color:var(--gray-700);">No Properties Found</h3>
+      <p style="color:var(--gray-400);margin-bottom:1rem;">Try adjusting your filters or search term</p>
+      <button class="btn btn-outline btn-sm" onclick="clearFilters()">Clear Filters</button>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="properties-grid hidden" id="properties-grid"></div>
+
+  </main>
+
+  <script src="js/common.js"></script>
+  <script src="js/tenant-dashboard.js"></script>
+</body>
+</html>

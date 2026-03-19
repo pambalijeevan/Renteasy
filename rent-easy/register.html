@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — Rent Easy</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/register.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-blob auth-blob-1"></div>
+  <div class="auth-blob auth-blob-2"></div>
+
+  <header class="auth-header">
+    <div class="container">
+      <a href="index.html" class="logo" style="color:white;">
+        <div class="logo-icon" style="background:rgba(255,255,255,.2);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/></svg>
+        </div>
+        <div class="logo-text" style="-webkit-text-fill-color:white;background:none;color:white;">Rent Easy</div>
+      </a>
+    </div>
+  </header>
+
+  <main class="auth-main" style="padding:1.5rem 1rem;">
+    <div class="auth-card-wrap">
+      <div class="auth-card">
+
+        <div class="auth-card-header">
+          <div class="auth-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="28" height="28"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          </div>
+          <h1>Create Your Account</h1>
+          <p>Join Rent Easy — Hyderabad's #1 rental platform</p>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-tabs">
+          <button class="role-tab active" data-role="tenant" onclick="selectRole('tenant')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            I'm a Tenant
+          </button>
+          <button class="role-tab" data-role="owner" onclick="selectRole('owner')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            I'm an Owner
+          </button>
+        </div>
+
+        <!-- Error -->
+        <div class="alert alert-error hidden" id="error-box">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="error-text"></span>
+        </div>
+
+        <!-- Benefits -->
+        <div class="benefits-box" id="benefits-box">
+          <div class="benefit-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span id="benefit-1">Browse all Hyderabad listings</span>
+          </div>
+          <div class="benefit-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span id="benefit-2">View full-screen image gallery</span>
+          </div>
+          <div class="benefit-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span id="benefit-3">Contact owners directly</span>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form id="register-form" onsubmit="handleRegister(event)" autocomplete="on">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="name" class="form-input" placeholder="e.g. Ravi Kumar" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" id="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" id="phone" class="form-input" placeholder="+91 98765 43210" required autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <div class="input-password-wrapper">
+              <input type="password" id="password" class="form-input" placeholder="At least 6 characters" required autocomplete="new-password">
+              <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <input type="password" id="confirm-password" class="form-input" placeholder="Re-enter password" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%;padding:.875rem;font-size:1rem;">
+            <span id="btn-text">Create Tenant Account</span>
+            <span class="spinner hidden" id="btn-spinner"></span>
+          </button>
+        </form>
+
+        <p class="auth-switch-text">
+          Already have an account? <a href="login.html">Sign In</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <div class="auth-footer-note">Secure &amp; trusted by thousands of users in Hyderabad</div>
+
+  <script src="js/common.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add New Property — Rent Easy</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/add-property.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner" style="max-width:56rem;">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <a href="owner-dashboard.html" class="back-btn" title="Back to dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </a>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--orange-600)" stroke-width="2" width="22" height="22"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/></svg>
+          <span class="logo-text">Rent Easy</span>
+        </div>
+      </div>
+      <h1 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Add New Property</h1>
+    </div>
+  </header>
+
+  <main style="max-width:56rem;margin:0 auto;padding:2rem 1.5rem 5rem;">
+
+    <!-- Info Banner -->
+    <div class="alert alert-info" style="margin-bottom:2rem;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div>
+        <strong>All properties are restricted to Hyderabad</strong>
+        <div style="font-size:.8125rem;margin-top:.25rem;">Upload high-quality images for better visibility. Minimum 3 property photos required. Images are compressed for performance.</div>
+      </div>
+    </div>
+
+    <form id="property-form" onsubmit="handleSubmit(event)" novalidate>
+
+      <!-- Section 1: Basic Info -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">1</div>
+          <h2>Basic Property Information</h2>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Property Title *</label>
+          <input type="text" id="title" class="form-input" placeholder="e.g. Spacious 3BHK Apartment in Banjara Hills">
+          <div class="form-error hidden" id="err-title"></div>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Property Type *</label>
+            <select id="type" class="form-select">
+              <option value="">Select type</option>
+              <option>Apartment</option><option>House</option><option>Villa</option>
+              <option>Studio</option><option>PG / Hostel</option><option>Office Space</option>
+            </select>
+            <div class="form-error hidden" id="err-type"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Furnishing *</label>
+            <select id="furnishing" class="form-select">
+              <option value="">Select status</option>
+              <option>Fully Furnished</option><option>Semi-Furnished</option><option>Unfurnished</option>
+            </select>
+            <div class="form-error hidden" id="err-furnishing"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea id="description" class="form-textarea" rows="4" placeholder="Describe your property — highlights, condition, surroundings..."></textarea>
+          <div class="form-error hidden" id="err-description"></div>
+        </div>
+        <div class="four-col">
+          <div class="form-group">
+            <label class="form-label">Monthly Rent (₹) *</label>
+            <input type="number" id="price" class="form-input" placeholder="25000" min="1">
+            <div class="form-error hidden" id="err-price"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bedrooms *</label>
+            <input type="number" id="bedrooms" class="form-input" placeholder="2" min="0" max="20">
+            <div class="form-error hidden" id="err-bedrooms"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bathrooms *</label>
+            <input type="number" id="bathrooms" class="form-input" placeholder="2" min="0" max="20">
+            <div class="form-error hidden" id="err-bathrooms"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Area (sq ft) *</label>
+            <input type="number" id="area" class="form-input" placeholder="1200" min="1">
+            <div class="form-error hidden" id="err-area"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Location & Availability -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">2</div>
+          <h2>Location &amp; Availability</h2>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Area / Locality in Hyderabad *</label>
+          <select id="location" class="form-select">
+            <option value="">Select area in Hyderabad</option>
+          </select>
+          <div class="form-error hidden" id="err-location"></div>
+        </div>
+        <div class="alert alert-info" style="margin-bottom:1rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          City is fixed as <strong>Hyderabad, Telangana</strong>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Available From *</label>
+            <input type="date" id="available-from" class="form-input">
+            <div class="form-error hidden" id="err-available"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Your Contact Phone *</label>
+            <input type="tel" id="owner-phone" class="form-input" placeholder="+91 98765 43210">
+            <div class="form-error hidden" id="err-phone"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Property Images -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">3</div>
+          <h2>Property Images</h2>
+        </div>
+        <div class="upload-label-row">
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--orange-500)" stroke-width="2" width="20" height="20"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span style="font-weight:600;color:var(--gray-800);">Property Images</span>
+            <span style="font-size:.75rem;color:var(--red-500);">*Required (min 3)</span>
+          </div>
+          <span class="img-count-badge" id="main-img-count">0/3 min</span>
+        </div>
+        <p style="font-size:.8125rem;color:var(--gray-500);margin-bottom:.75rem;">Upload interior, exterior, bedroom, kitchen, and bathroom photos. First image will be the main display photo.</p>
+        <div class="upload-drop" id="main-drop" onclick="document.getElementById('main-input').click()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--orange-400)" stroke-width="2" width="32" height="32"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <p style="font-weight:500;color:var(--gray-600);">Click to select images from your computer</p>
+          <p style="font-size:.75rem;color:var(--gray-400);">PNG, JPG, JPEG accepted</p>
+          <input type="file" id="main-input" class="hidden" accept="image/*" multiple onchange="handleImageFiles(this.files,'main')">
+        </div>
+        <div class="img-grid" id="main-preview"></div>
+        <div class="form-error hidden" id="err-images"></div>
+      </div>
+
+      <!-- Section 4: 3D Virtual Tour -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">4</div>
+          <h2>3D Virtual Tour</h2>
+        </div>
+        <div class="upload-label-row">
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" width="20" height="20"><polyline points="21 8 21 21 3 21 3 8"/><rect width="22" height="5" x="1" y="3"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            <span style="font-weight:600;color:var(--gray-800);">3D Tour File</span>
+            <span style="font-size:.75rem;color:var(--gray-400);">(Optional)</span>
+          </div>
+        </div>
+        <p style="font-size:.8125rem;color:var(--gray-500);margin-bottom:.75rem;">Upload a 3D tour file (.glb, .gltf, .obj, .zip, .mp4). Tenants will see this file is available when viewing the property.</p>
+        <div class="upload-drop" onclick="document.getElementById('tour-input').click()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" width="32" height="32"><polyline points="21 8 21 21 3 21 3 8"/><rect width="22" height="5" x="1" y="3"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          <p style="font-weight:500;color:var(--gray-600);">Click to select 3D tour file</p>
+          <p style="font-size:.75rem;color:var(--gray-400);">.glb .gltf .obj .zip .mp4 .360</p>
+          <input type="file" id="tour-input" class="hidden" accept=".glb,.gltf,.obj,.zip,.mp4,.360" onchange="handleTourFile(this.files)">
+        </div>
+        <div class="tour-file-display hidden" id="tour-file-display">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" width="20" height="20"><polyline points="21 8 21 21 3 21 3 8"/><rect width="22" height="5" x="1" y="3"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          <span id="tour-file-name" style="flex:1;font-size:.875rem;color:var(--blue-800);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <button type="button" onclick="removeTourFile()" style="color:var(--red-400);flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 5: Nearby Places Images -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">5</div>
+          <h2>Nearby Places Images</h2>
+        </div>
+        <div class="upload-label-row">
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2" width="20" height="20"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span style="font-weight:600;color:var(--gray-800);">Nearby Places Photos</span>
+            <span style="font-size:.75rem;color:var(--gray-400);">(Optional)</span>
+          </div>
+        </div>
+        <p style="font-size:.8125rem;color:var(--gray-500);margin-bottom:.75rem;">Upload photos of nearby metro station, shopping malls, parks, hospitals, schools, etc.</p>
+        <div class="upload-drop" onclick="document.getElementById('nearby-input').click()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" stroke-width="2" width="32" height="32"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><polyline points="21 15 16 10 5 21"/></svg>
+          <p style="font-weight:500;color:var(--gray-600);">Click to select images</p>
+          <p style="font-size:.75rem;color:var(--gray-400);">PNG, JPG, JPEG accepted</p>
+          <input type="file" id="nearby-input" class="hidden" accept="image/*" multiple onchange="handleImageFiles(this.files,'nearby')">
+        </div>
+        <div class="img-grid" id="nearby-preview"></div>
+      </div>
+
+      <!-- Section 6: Food Court Images -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">6</div>
+          <h2>Food Court &amp; Restaurant Images</h2>
+        </div>
+        <div class="upload-label-row">
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="2" width="20" height="20"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+            <span style="font-weight:600;color:var(--gray-800);">Food Court / Restaurant Photos</span>
+            <span style="font-size:.75rem;color:var(--gray-400);">(Optional)</span>
+          </div>
+        </div>
+        <p style="font-size:.8125rem;color:var(--gray-500);margin-bottom:.75rem;">Upload photos of nearby restaurants, food courts, cafes, and eateries.</p>
+        <div class="upload-drop" onclick="document.getElementById('food-input').click()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="2" width="32" height="32"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+          <p style="font-weight:500;color:var(--gray-600);">Click to select images</p>
+          <p style="font-size:.75rem;color:var(--gray-400);">PNG, JPG, JPEG accepted</p>
+          <input type="file" id="food-input" class="hidden" accept="image/*" multiple onchange="handleImageFiles(this.files,'food')">
+        </div>
+        <div class="img-grid" id="food-preview"></div>
+      </div>
+
+      <!-- Section 7: Nearby Places List -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">7</div>
+          <h2>Nearby Places &amp; Distances</h2>
+        </div>
+        <p style="font-size:.875rem;color:var(--gray-500);margin-bottom:1rem;">Add key nearby places with their distances (e.g., Metro Station — 0.5 km)</p>
+        <div id="nearby-places-list"></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addNearbyPlace()" style="margin-top:.75rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Nearby Place
+        </button>
+      </div>
+
+      <!-- Section 8: Amenities -->
+      <div class="form-section">
+        <div class="section-title">
+          <div class="section-title-num">8</div>
+          <h2>Amenities &amp; Features</h2>
+        </div>
+        <div class="amenities-grid" id="amenities-grid"></div>
+      </div>
+
+      <!-- Submit -->
+      <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1rem;">
+        <a href="owner-dashboard.html" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+          <span id="submit-text">List Property</span>
+          <span class="spinner hidden" id="submit-spinner"></span>
+        </button>
+      </div>
+
+    </form>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script src="js/add-property.js"></script>
+</body>
+</html>
