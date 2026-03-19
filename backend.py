@@ -26,7 +26,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
 # Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'  # Change this to a random secret key
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'glb', 'gltf'}
@@ -37,10 +37,11 @@ os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], '3d_views'), exist_ok=True
 
 # Database Configuration
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',  # Change this to your MySQL username
-    'password': '',  # Change this to your MySQL password
-    'database': 'rentalhub'
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'port': int(os.getenv('DB_PORT', '3306')),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'database': os.getenv('DB_NAME', 'rentalhub')
 }
 
 def get_db_connection():
@@ -475,4 +476,4 @@ def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.datetime.now().isoformat()}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', '5000')))

@@ -33,7 +33,7 @@ except Exception:
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app, origins='*')
 
-app.config['SECRET_KEY'] = 'rent-easy-hyderabad-secret-2026'   # Change in production
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'rent-easy-hyderabad-secret-2026')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024             # 50 MB
 
 UPLOAD_FOLDER = os.path.join('src', 'uploads')
@@ -47,10 +47,11 @@ for sub in ('properties', 'nearby', 'food', 'tours'):
 # ─── MySQL Config ─────────────────────────────────────────────────────────────
 
 DB_CONFIG = {
-    'host':     'localhost',
-    'user':     'root',         # ← Change to your MySQL username
-    'password': '',             # ← Change to your MySQL password
-    'database': 'rent_easy',
+    'host':     os.getenv('DB_HOST', 'localhost'),
+    'port':     int(os.getenv('DB_PORT', '3306')),
+    'user':     os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'database': os.getenv('DB_NAME', 'rent_easy'),
     'charset':  'utf8mb4',
 }
 
@@ -550,4 +551,4 @@ def health():
 # ─── Run ──────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', '5000')))
