@@ -25,6 +25,9 @@ let mainImages    = [];    // {dataUrl, file}
 let nearbyImages  = [];
 let foodImages    = [];
 let tourFileName  = '';
+let tourFile      = null;
+let tourDataUrl   = '';
+let tourReadPromise = Promise.resolve();
 let nearbyPlaces  = [{ id: '1', name: '', distance: '', category: 'metro' }];
 let selectedAmenities = new Set();
 let currentUser   = null;
@@ -119,11 +122,22 @@ function handleTourFile(files) {
   const file = files[0];
   if (!file) return;
   tourFileName = file.name;
+  tourFile     = file;
+  tourDataUrl  = '';
   document.getElementById('tour-file-name').textContent = file.name;
   document.getElementById('tour-file-display').classList.remove('hidden');
+  tourReadPromise = new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload  = (e) => { tourDataUrl = e.target.result; resolve(); };
+    reader.onerror = () => resolve();
+    reader.readAsDataURL(file);
+  });
 }
 function removeTourFile() {
-  tourFileName = '';
+  tourFileName    = '';
+  tourFile        = null;
+  tourDataUrl     = '';
+  tourReadPromise = Promise.resolve();
   document.getElementById('tour-file-display').classList.add('hidden');
   document.getElementById('tour-input').value = '';
 }
@@ -250,6 +264,8 @@ async function handleSubmit(e) {
 
   try {
     const validNearby = nearbyPlaces.filter(p => p.name.trim() && p.distance.trim());
+    // Ensure the tour file data URL is ready before proceeding
+    await tourReadPromise;
     let propertyData;
     let uploadedMainImgs    = mainImages.map(i => i.dataUrl);
     let uploadedNearbyImgs  = nearbyImages.map(i => i.dataUrl);
@@ -272,8 +288,13 @@ async function handleSubmit(e) {
         }
       } catch { /* Use dataUrls as fallback */ }
 
+      let uploadedTourUrl = null;
+      if (tourFile) {
+        try { uploadedTourUrl = await uploadTourFileToServer(tourFile); } catch (e) { console.warn('Tour file upload failed:', e); }
+      }
+
       propertyData = buildPropertyPayload(title, type, description, price, bedrooms, bathrooms,
-        area, location, furnishing, avail, phone, tourFileName,
+        area, location, furnishing, avail, phone, tourFileName, uploadedTourUrl,
         uploadedMainImgs, uploadedNearbyImgs, uploadedFoodImgs, validNearby);
 
       const { ok, data } = await apiCall('/properties', { method: 'POST', body: propertyData });
@@ -287,7 +308,7 @@ async function handleSubmit(e) {
 
     // Fallback: save to localStorage
     propertyData = buildPropertyPayload(title, type, description, price, bedrooms, bathrooms,
-      area, location, furnishing, avail, phone, tourFileName,
+      area, location, furnishing, avail, phone, tourFileName, tourDataUrl || null,
       uploadedMainImgs, uploadedNearbyImgs, uploadedFoodImgs, validNearby);
 
     const localProp = {
@@ -325,8 +346,22 @@ async function uploadImagesToServer(files, type) {
   return data.urls || [];
 }
 
+async function uploadTourFileToServer(file) {
+  const formData = new FormData();
+  formData.append('view3d', file);
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/upload/3d`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.url || null;
+}
+
 function buildPropertyPayload(title, type, description, price, bedrooms, bathrooms,
-  area, location, furnishing, avail, phone, tourFileName,
+  area, location, furnishing, avail, phone, tourFileName, tourUrl,
   images, nearbyImages, foodImages, nearbyPlaces) {
   return {
     title, type, description,
@@ -340,6 +375,7 @@ function buildPropertyPayload(title, type, description, price, bedrooms, bathroo
     availableFrom:       avail,
     ownerPhone:          phone,
     tourFileName:        tourFileName || null,
+    tourUrl:             tourUrl || null,
     images,
     nearbyPlacesImages:  nearbyImages,
     foodCourtImages:     foodImages,

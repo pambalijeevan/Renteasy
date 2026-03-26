@@ -86,6 +86,7 @@ function normalizeProperty(p) {
     ownerPhone:   p.ownerPhone   || p.owner_phone   || '',
     ownerEmail:   p.ownerEmail   || p.owner_email   || '',
     tourFileName: p.tourFileName || p.tour_file_name || '',
+    tourUrl:      p.tourUrl      || p.view3D         || '',
     availableFrom:p.availableFrom|| p.available_from || '',
     nearbyPlacesImages: p.nearbyPlacesImages || [],
     foodCourtImages:    p.foodCourtImages    || [],
@@ -113,7 +114,7 @@ function renderPage() {
   // Badges
   document.getElementById('type-badge').innerHTML =
     `<span class="badge badge-orange" style="font-size:.875rem;">${property.type}</span>`;
-  if (property.tourFileName) {
+  if (property.tourFileName || property.tourUrl) {
     document.getElementById('tour-badge').style.display = '';
     document.getElementById('tour-badge').innerHTML =
       `<span class="badge badge-blue" style="display:flex;align-items:center;gap:.375rem;">
@@ -152,9 +153,50 @@ function renderPage() {
   }
 
   // 3D Tour
-  if (property.tourFileName) {
+  if (property.tourFileName || property.tourUrl) {
     document.getElementById('tour-section').classList.remove('hidden');
-    document.getElementById('tour-file-name').textContent = property.tourFileName;
+    const tourUrl      = property.tourUrl;
+    const tourFileName = property.tourFileName || 'Virtual Tour';
+    // A data URL is viewable only if it represents a GLB/GLTF (matched by filename)
+    // or has the correct 3D model MIME type; generic octet-stream is validated via filename.
+    const hasGlbExt  = /\.(glb|gltf)$/i.test(tourFileName);
+    const isViewable  = tourUrl && (
+      /\.(glb|gltf)$/i.test(tourUrl) ||
+      tourUrl.startsWith('data:model/gltf') ||
+      (tourUrl.startsWith('data:') && hasGlbExt)
+    );
+    const container = document.getElementById('tour-viewer-container');
+    if (isViewable) {
+      const mv = document.createElement('model-viewer');
+      mv.setAttribute('src', tourUrl);
+      mv.setAttribute('alt', `3D Virtual Tour of ${property.title}`);
+      mv.setAttribute('auto-rotate', '');
+      mv.setAttribute('camera-controls', '');
+      mv.setAttribute('loading', 'eager');
+      mv.style.cssText = 'width:100%;height:500px;border-radius:.75rem;background:#f1f5f9;';
+      container.innerHTML = '';
+      container.appendChild(mv);
+      const hint = document.createElement('p');
+      hint.style.cssText = 'font-size:.8125rem;color:var(--blue-500);margin-top:.625rem;text-align:center;';
+      hint.textContent = 'Use mouse or touch to rotate and explore the 3D model.';
+      container.appendChild(hint);
+    } else {
+      const safeName = tourFileName.replace(/[<>"'&]/g, c =>
+        ({ '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;", '&':'&amp;' }[c]));
+      container.innerHTML = `
+        <div style="background:linear-gradient(135deg,var(--blue-50),#eef2ff);border-radius:.75rem;padding:2rem;text-align:center;border:1px solid var(--blue-200);">
+          <div style="width:4rem;height:4rem;background:var(--blue-100);border-radius:.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" width="28" height="28"><polyline points="21 8 21 21 3 21 3 8"/><rect width="22" height="5" x="1" y="3"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          </div>
+          <p style="font-weight:700;color:var(--blue-900);margin-bottom:.5rem;">3D Tour File Available</p>
+          <p style="font-size:.875rem;color:var(--blue-600);margin-bottom:1rem;">The owner has uploaded a 3D virtual tour for this property.</p>
+          <div style="background:white;border-radius:.75rem;padding:.75rem 1rem;display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--blue-200);font-size:.875rem;color:var(--blue-800);">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="21 8 21 21 3 21 3 8"/><rect width="22" height="5" x="1" y="3"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            ${safeName}
+          </div>
+          <p style="font-size:.8125rem;color:var(--blue-500);margin-top:.75rem;">Contact the owner to request access to the full 3D tour.</p>
+        </div>`;
+    }
   }
 
   // Nearby images
