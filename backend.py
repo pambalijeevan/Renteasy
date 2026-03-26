@@ -19,12 +19,15 @@ import os
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
+
+app = Flask(__name__, static_folder=PUBLIC_DIR, static_url_path='')
 CORS(app)  # Enable CORS for frontend communication
 
 # Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'  # Change this to a random secret key
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
+app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', os.path.join(BASE_DIR, 'uploads'))
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'glb', 'gltf'}
 
@@ -34,10 +37,10 @@ os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], '3d_views'), exist_ok=True
 
 # Database Configuration
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',  # Change this to your MySQL username
-    'password': '',  # Change this to your MySQL password
-    'database': 'rentalhub'
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'user': os.environ.get('DB_USER', 'root'),
+    'password': os.environ.get('DB_PASSWORD', ''),
+    'database': os.environ.get('DB_NAME', 'rentalhub')
 }
 
 def get_db_connection():
@@ -64,6 +67,18 @@ def verify_token(token):
         return jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
     except:
         return None
+
+
+@app.route('/')
+def serve_index():
+    """Serve the public frontend entry page."""
+    return send_from_directory(PUBLIC_DIR, 'index.html')
+
+
+@app.route('/<path:filename>')
+def serve_public_file(filename):
+    """Serve frontend static assets from the public directory."""
+    return send_from_directory(PUBLIC_DIR, filename)
 
 # ==== AUTHENTICATION ENDPOINTS ====
 
@@ -468,4 +483,6 @@ def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.datetime.now().isoformat()}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(debug=debug, host='0.0.0.0', port=port)
