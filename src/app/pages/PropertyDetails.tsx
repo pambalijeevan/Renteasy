@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getCurrentSession } from '../data/auth';
 import { getStoredProperties, type Property, type NearbyPlace } from '../data/properties';
+import { getTourAssetBlob } from '../data/tourStorage';
 import { ImageGalleryModal } from '../components/ImageGalleryModal';
 import { toast } from 'sonner';
 
@@ -34,32 +35,32 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 type TourKind = 'model' | 'video' | 'image' | 'file';
 
-const getTourKind = (property: Property): TourKind => {
-  const url = (property.tourUrl || '').toLowerCase();
-  const fileName = (property.tourFileName || '').toLowerCase();
-  const mime = (property.tourMimeType || '').toLowerCase();
+const getTourKind = (url: string, fileName: string, mimeType: string): TourKind => {
+  const src = (url || '').toLowerCase();
+  const name = (fileName || '').toLowerCase();
+  const mime = (mimeType || '').toLowerCase();
 
   const isModel =
     mime.startsWith('model/') ||
     mime.includes('gltf') ||
-    /\.(glb|gltf)(\?|#|$)/i.test(url) ||
-    /\.(glb|gltf)$/i.test(fileName) ||
-    url.startsWith('data:model/') ||
-    (url.startsWith('data:application/octet-stream') && /\.(glb|gltf)$/i.test(fileName));
+    /\.(glb|gltf)(\?|#|$)/i.test(src) ||
+    /\.(glb|gltf)$/i.test(name) ||
+    src.startsWith('data:model/') ||
+    (src.startsWith('data:application/octet-stream') && /\.(glb|gltf)$/i.test(name));
   if (isModel) return 'model';
 
   const isVideo =
     mime.startsWith('video/') ||
-    /\.(mp4|webm|mov)(\?|#|$)/i.test(url) ||
-    /\.(mp4|webm|mov)$/i.test(fileName) ||
-    url.startsWith('data:video/');
+    /\.(mp4|webm|mov)(\?|#|$)/i.test(src) ||
+    /\.(mp4|webm|mov)$/i.test(name) ||
+    src.startsWith('data:video/');
   if (isVideo) return 'video';
 
   const isImage =
     mime.startsWith('image/') ||
-    /\.(png|jpg|jpeg|webp|gif)(\?|#|$)/i.test(url) ||
-    /\.(png|jpg|jpeg|webp|gif)$/i.test(fileName) ||
-    url.startsWith('data:image/');
+    /\.(png|jpg|jpeg|webp|gif)(\?|#|$)/i.test(src) ||
+    /\.(png|jpg|jpeg|webp|gif)$/i.test(name) ||
+    src.startsWith('data:image/');
   if (isImage) return 'image';
 
   return 'file';
@@ -70,6 +71,8 @@ export function PropertyDetails() {
   const navigate = useNavigate();
   const user = getCurrentSession();
   const [property, setProperty] = useState<Property | null>(null);
+  const [tourViewUrl, setTourViewUrl] = useState<string | null>(null);
+  const [tourResolving, setTourResolving] = useState(false);
 
   // Gallery state
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -98,6 +101,48 @@ export function PropertyDetails() {
     setProperty(found);
     setInquiryMessage(`Hi, I'm interested in renting "${found.title}" listed on Rent Easy. Could you please provide more details? Thank you.`);
   }, [id, user, navigate]);
+
+  useEffect(() => {
+    let shouldIgnore = false;
+    let createdObjectUrl: string | null = null;
+
+    const resolveTour = async () => {
+      if (!property) {
+        setTourViewUrl(null);
+        setTourResolving(false);
+        return;
+      }
+
+      if (!property.tourAssetId) {
+        setTourViewUrl(property.tourUrl || null);
+        setTourResolving(false);
+        return;
+      }
+
+      setTourResolving(true);
+      try {
+        const blob = await getTourAssetBlob(property.tourAssetId);
+        if (shouldIgnore) return;
+        if (blob) {
+          createdObjectUrl = URL.createObjectURL(blob);
+          setTourViewUrl(createdObjectUrl);
+        } else {
+          setTourViewUrl(property.tourUrl || null);
+        }
+      } catch {
+        if (!shouldIgnore) setTourViewUrl(property.tourUrl || null);
+      } finally {
+        if (!shouldIgnore) setTourResolving(false);
+      }
+    };
+
+    resolveTour();
+
+    return () => {
+      shouldIgnore = true;
+      if (createdObjectUrl) URL.revokeObjectURL(createdObjectUrl);
+    };
+  }, [property?.id, property?.tourAssetId, property?.tourUrl]);
 
   const openGallery = (images: string[], index: number, title: string) => {
     setGalleryImages(images);
@@ -133,6 +178,9 @@ export function PropertyDetails() {
 
   const isOwner = user?.role === 'owner';
   const backLink = isOwner ? '/owner/dashboard' : '/tenant/dashboard';
+  const effectiveTourUrl = tourViewUrl || property.tourUrl || '';
+  const hasTour = !!(property.tourFileName || property.tourUrl || property.tourAssetId);
+  const tourKind = getTourKind(effectiveTourUrl, property.tourFileName || '', property.tourMimeType || '');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -201,7 +249,7 @@ export function PropertyDetails() {
                 <span className="absolute top-4 left-4 bg-orange-600 text-white text-sm px-3 py-1 rounded-xl" style={{ fontWeight: 700 }}>
                   {property.type}
                 </span>
-                {(property.tourFileName || property.tourUrl) && (
+                {hasTour && (
                   <span className="absolute top-4 right-14 bg-blue-600 text-white text-sm px-3 py-1 rounded-xl flex items-center gap-1.5" style={{ fontWeight: 600 }}>
                     <Box className="w-3.5 h-3.5" /> 3D Tour Available
                   </span>
@@ -321,17 +369,24 @@ export function PropertyDetails() {
             )}
 
             {/* ── 3D Virtual Tour ───────────────────────────────────── */}
-            {(property.tourFileName || property.tourUrl) && (
+            {hasTour && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-gray-900 mb-4 flex items-center gap-2" style={{ fontWeight: 700 }}>
                   <Box className="w-5 h-5 text-blue-600" />
                   3D Virtual Tour
                 </h2>
-                {property.tourUrl ? (
-                  getTourKind(property) === 'model' ? (
+                {tourResolving ? (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center">
+                    <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-blue-800 text-sm" style={{ fontWeight: 600 }}>
+                      Loading 3D tour...
+                    </p>
+                  </div>
+                ) : effectiveTourUrl ? (
+                  tourKind === 'model' ? (
                     <div className="space-y-3">
                       <model-viewer
-                        src={property.tourUrl}
+                        src={effectiveTourUrl}
                         alt={`3D tour of ${property.title}`}
                         camera-controls
                         auto-rotate
@@ -343,20 +398,20 @@ export function PropertyDetails() {
                         Drag to rotate and scroll to zoom.
                       </p>
                     </div>
-                  ) : getTourKind(property) === 'video' ? (
+                  ) : tourKind === 'video' ? (
                     <video
-                      src={property.tourUrl}
+                      src={effectiveTourUrl}
                       controls
                       className="w-full rounded-xl bg-slate-100"
                       style={{ maxHeight: '520px' }}
                     />
-                  ) : getTourKind(property) === 'image' ? (
+                  ) : tourKind === 'image' ? (
                     <button
-                      onClick={() => openGallery([property.tourUrl!], 0, '3D Tour')}
+                      onClick={() => openGallery([effectiveTourUrl], 0, '3D Tour')}
                       className="w-full rounded-xl overflow-hidden border border-blue-100 bg-blue-50"
                     >
                       <img
-                        src={property.tourUrl}
+                        src={effectiveTourUrl}
                         alt={property.tourFileName || '3D Tour'}
                         className="w-full h-auto object-contain"
                         style={{ maxHeight: '520px' }}
@@ -364,7 +419,7 @@ export function PropertyDetails() {
                     </button>
                   ) : (
                     <a
-                      href={property.tourUrl}
+                      href={effectiveTourUrl}
                       download={property.tourFileName || 'tour-file'}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
                       style={{ fontWeight: 600 }}

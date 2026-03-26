@@ -22,6 +22,7 @@ export interface Property {
   tourFileName?: string;
   tourUrl?: string;
   tourMimeType?: string;
+  tourAssetId?: string;
   nearbyPlacesImages: string[];
   foodCourtImages: string[];
   // Details

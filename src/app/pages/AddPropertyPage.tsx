@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import {
   Building2, ArrowLeft, Upload, X, Plus, Trash2,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getCurrentSession } from '../data/auth';
 import { saveProperty, type NearbyPlace } from '../data/properties';
+import { saveTourAsset } from '../data/tourStorage';
 import { compressImage } from '../utils/imageUtils';
 import { toast } from 'sonner';
 
@@ -155,9 +156,10 @@ export function AddPropertyPage() {
   // ─ Images & Media
   const [propertyImages, setPropertyImages] = useState<string[]>([]);
   const [tourFileName, setTourFileName] = useState('');
-  const [tourUrl, setTourUrl] = useState<string | undefined>(undefined);
   const [tourMimeType, setTourMimeType] = useState<string | undefined>(undefined);
-  const tourReadPromiseRef = useRef<Promise<void>>(Promise.resolve());
+  const [tourFile, setTourFile] = useState<File | null>(null);
+  const [tourPreviewUrl, setTourPreviewUrl] = useState<string | undefined>(undefined);
+  const tourPreviewObjectUrlRef = useRef<string | null>(null);
   const [nearbyImages, setNearbyImages] = useState<string[]>([]);
   const [foodImages, setFoodImages] = useState<string[]>([]);
 
@@ -180,7 +182,7 @@ export function AddPropertyPage() {
     setPropertyImages((prev) => [...prev, ...compressed]);
   }, []);
 
-  const handleTourFile = async (files: FileList) => {
+  const handleTourFile = (files: FileList) => {
     const file = files[0];
     if (!file) return;
 
@@ -192,34 +194,27 @@ export function AddPropertyPage() {
           ? 'model/gltf+json'
           : file.type || undefined;
 
-    try {
-      setTourFileName(file.name);
-      setTourMimeType(inferredMime);
+    setTourFile(file);
+    setTourFileName(file.name);
+    setTourMimeType(inferredMime);
 
-      const readPromise = new Promise<void>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          let dataUrl = String(reader.result || '');
-          if (ext === 'glb') {
-            dataUrl = dataUrl.replace(/^data:application\/octet-stream/i, 'data:model/gltf-binary');
-          } else if (ext === 'gltf') {
-            dataUrl = dataUrl.replace(/^data:application\/octet-stream/i, 'data:model/gltf+json');
-          }
-          setTourUrl(dataUrl || undefined);
-          resolve();
-        };
-        reader.onerror = () => reject(new Error('Failed to read 3D file'));
-        reader.readAsDataURL(file);
-      });
-      tourReadPromiseRef.current = readPromise;
-      await readPromise;
-    } catch {
-      setTourUrl(undefined);
-      setTourMimeType(undefined);
-      tourReadPromiseRef.current = Promise.resolve();
-      toast.error('Unable to process the 3D file. Please try another file.');
+    if (tourPreviewObjectUrlRef.current) {
+      URL.revokeObjectURL(tourPreviewObjectUrlRef.current);
+      tourPreviewObjectUrlRef.current = null;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    tourPreviewObjectUrlRef.current = objectUrl;
+    setTourPreviewUrl(objectUrl);
   };
+
+  useEffect(() => {
+    return () => {
+      if (tourPreviewObjectUrlRef.current) {
+        URL.revokeObjectURL(tourPreviewObjectUrlRef.current);
+      }
+    };
+  }, []);
 
   const handleNearbyImages = useCallback(async (files: FileList) => {
     const compressed = await Promise.all(
@@ -291,7 +286,11 @@ export function AddPropertyPage() {
 
     setLoading(true);
     try {
-      await tourReadPromiseRef.current;
+      let tourAssetId: string | undefined;
+      if (tourFile) {
+        const asset = await saveTourAsset(tourFile);
+        tourAssetId = asset.id;
+      }
 
       const validNearby = nearbyPlaces.filter(
         (p) => p.name.trim() && p.distance.trim()
@@ -311,8 +310,8 @@ export function AddPropertyPage() {
         furnishing,
         images: propertyImages,
         tourFileName: tourFileName || undefined,
-        tourUrl,
         tourMimeType,
+        tourAssetId,
         nearbyPlacesImages: nearbyImages,
         foodCourtImages: foodImages,
         nearbyPlaces: validNearby,
@@ -602,15 +601,45 @@ export function AddPropertyPage() {
               onAdd={handleTourFile}
               onRemove={() => {
                 setTourFileName('');
-                setTourUrl(undefined);
                 setTourMimeType(undefined);
-                tourReadPromiseRef.current = Promise.resolve();
+                setTourFile(null);
+                setTourPreviewUrl(undefined);
+                if (tourPreviewObjectUrlRef.current) {
+                  URL.revokeObjectURL(tourPreviewObjectUrlRef.current);
+                  tourPreviewObjectUrlRef.current = null;
+                }
               }}
               multiple={false}
               accept=".glb,.gltf,.obj,.zip,.mp4,.360"
               isFileMode
               fileName={tourFileName}
             />
+            {tourPreviewUrl && (
+              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+                {(tourMimeType?.startsWith('model/') || tourMimeType?.includes('gltf') || /\.(glb|gltf)$/i.test(tourFileName)) ? (
+                  <>
+                    <model-viewer
+                      src={tourPreviewUrl}
+                      alt="3D model preview"
+                      camera-controls
+                      auto-rotate
+                      loading="eager"
+                      touch-action="pan-y"
+                      style={{ width: '100%', height: '320px', borderRadius: '0.75rem', background: '#f1f5f9' }}
+                    />
+                    <p className="text-blue-700 text-xs mt-2 text-center">
+                      Live 3D preview: drag to rotate and scroll to zoom.
+                    </p>
+                  </>
+                ) : tourMimeType?.startsWith('video/') ? (
+                  <video src={tourPreviewUrl} controls className="w-full rounded-lg" style={{ maxHeight: '320px' }} />
+                ) : tourMimeType?.startsWith('image/') ? (
+                  <img src={tourPreviewUrl} alt="3D upload preview" className="w-full h-auto rounded-lg object-contain" style={{ maxHeight: '320px' }} />
+                ) : (
+                  <p className="text-blue-700 text-xs text-center">Preview unavailable for this format.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── Section 5: Nearby Places Images ─────────────────────── */}
