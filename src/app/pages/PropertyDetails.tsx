@@ -385,21 +385,22 @@ export function PropertyDetails() {
                 ) : effectiveTourUrl ? (
                   tourKind === 'model' ? (
                     <div className="space-y-3">
-                      <model-viewer
-                        src={effectiveTourUrl}
-                        alt={`3D tour of ${property.title}`}
-                        camera-controls
-                        auto-rotate
-                        loading="eager"
-                        touch-action="pan-y"
-                        min-camera-orbit="auto auto 10%"
-                        max-camera-orbit="auto auto 600%"
-                        min-field-of-view="8deg"
-                        max-field-of-view="95deg"
-                        style={{ width: '100%', height: '520px', borderRadius: '0.9rem', background: '#f1f5f9', cursor: 'grab' }}
-                      />
+                      <div className="rounded-2xl overflow-hidden border border-blue-200 bg-white shadow-sm">
+                        <model-viewer
+                          src={effectiveTourUrl}
+                          alt={`3D tour of ${property.title}`}
+                          camera-controls
+                          loading="eager"
+                          touch-action="pan-y"
+                          min-camera-orbit="auto auto 35%"
+                          max-camera-orbit="auto auto 240%"
+                          min-field-of-view="18deg"
+                          max-field-of-view="62deg"
+                          style={{ width: '100%', height: '520px', background: '#ffffff', cursor: 'grab' }}
+                        />
+                      </div>
                       <p className="text-blue-600 text-xs text-center">
-                        Drag to rotate and scroll to zoom.
+                        Drag to rotate and scroll slowly to zoom.
                       </p>
                     </div>
                   ) : tourKind === 'video' ? (

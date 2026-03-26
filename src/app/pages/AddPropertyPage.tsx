@@ -618,21 +618,22 @@ export function AddPropertyPage() {
               <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
                 {(tourMimeType?.startsWith('model/') || tourMimeType?.includes('gltf') || /\.(glb|gltf)$/i.test(tourFileName)) ? (
                   <>
-                    <model-viewer
-                      src={tourPreviewUrl}
-                      alt="3D model preview"
-                      camera-controls
-                      auto-rotate
-                      loading="eager"
-                      touch-action="pan-y"
-                      min-camera-orbit="auto auto 10%"
-                      max-camera-orbit="auto auto 600%"
-                      min-field-of-view="8deg"
-                      max-field-of-view="95deg"
-                      style={{ width: '100%', height: '320px', borderRadius: '0.75rem', background: '#f1f5f9' }}
-                    />
+                    <div className="rounded-xl overflow-hidden border border-blue-200 bg-white shadow-sm">
+                      <model-viewer
+                        src={tourPreviewUrl}
+                        alt="3D model preview"
+                        camera-controls
+                        loading="eager"
+                        touch-action="pan-y"
+                        min-camera-orbit="auto auto 35%"
+                        max-camera-orbit="auto auto 240%"
+                        min-field-of-view="18deg"
+                        max-field-of-view="62deg"
+                        style={{ width: '100%', height: '320px', background: '#ffffff' }}
+                      />
+                    </div>
                     <p className="text-blue-700 text-xs mt-2 text-center">
-                      Live 3D preview: drag to rotate and scroll to zoom.
+                      Clean preview: drag to rotate and scroll slowly to zoom.
                     </p>
                   </>
                 ) : tourMimeType?.startsWith('video/') ? (
