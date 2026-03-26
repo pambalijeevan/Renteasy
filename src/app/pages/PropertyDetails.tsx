@@ -32,6 +32,39 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: 'bg-gray-100 text-gray-700',
 };
 
+type TourKind = 'model' | 'video' | 'image' | 'file';
+
+const getTourKind = (property: Property): TourKind => {
+  const url = (property.tourUrl || '').toLowerCase();
+  const fileName = (property.tourFileName || '').toLowerCase();
+  const mime = (property.tourMimeType || '').toLowerCase();
+
+  const isModel =
+    mime.startsWith('model/') ||
+    mime.includes('gltf') ||
+    /\.(glb|gltf)(\?|#|$)/i.test(url) ||
+    /\.(glb|gltf)$/i.test(fileName) ||
+    url.startsWith('data:model/') ||
+    (url.startsWith('data:application/octet-stream') && /\.(glb|gltf)$/i.test(fileName));
+  if (isModel) return 'model';
+
+  const isVideo =
+    mime.startsWith('video/') ||
+    /\.(mp4|webm|mov)(\?|#|$)/i.test(url) ||
+    /\.(mp4|webm|mov)$/i.test(fileName) ||
+    url.startsWith('data:video/');
+  if (isVideo) return 'video';
+
+  const isImage =
+    mime.startsWith('image/') ||
+    /\.(png|jpg|jpeg|webp|gif)(\?|#|$)/i.test(url) ||
+    /\.(png|jpg|jpeg|webp|gif)$/i.test(fileName) ||
+    url.startsWith('data:image/');
+  if (isImage) return 'image';
+
+  return 'file';
+};
+
 export function PropertyDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -168,7 +201,7 @@ export function PropertyDetails() {
                 <span className="absolute top-4 left-4 bg-orange-600 text-white text-sm px-3 py-1 rounded-xl" style={{ fontWeight: 700 }}>
                   {property.type}
                 </span>
-                {property.tourFileName && (
+                {(property.tourFileName || property.tourUrl) && (
                   <span className="absolute top-4 right-14 bg-blue-600 text-white text-sm px-3 py-1 rounded-xl flex items-center gap-1.5" style={{ fontWeight: 600 }}>
                     <Box className="w-3.5 h-3.5" /> 3D Tour Available
                   </span>
@@ -288,28 +321,73 @@ export function PropertyDetails() {
             )}
 
             {/* ── 3D Virtual Tour ───────────────────────────────────── */}
-            {property.tourFileName && (
+            {(property.tourFileName || property.tourUrl) && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-gray-900 mb-4 flex items-center gap-2" style={{ fontWeight: 700 }}>
                   <Box className="w-5 h-5 text-blue-600" />
                   3D Virtual Tour
                 </h2>
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 text-center border border-blue-100">
-                  <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Box className="w-8 h-8 text-blue-600" />
+                {property.tourUrl ? (
+                  getTourKind(property) === 'model' ? (
+                    <div className="space-y-3">
+                      <model-viewer
+                        src={property.tourUrl}
+                        alt={`3D tour of ${property.title}`}
+                        camera-controls
+                        auto-rotate
+                        loading="eager"
+                        touch-action="pan-y"
+                        style={{ width: '100%', height: '520px', borderRadius: '0.9rem', background: '#f1f5f9', cursor: 'grab' }}
+                      />
+                      <p className="text-blue-600 text-xs text-center">
+                        Drag to rotate and scroll to zoom.
+                      </p>
+                    </div>
+                  ) : getTourKind(property) === 'video' ? (
+                    <video
+                      src={property.tourUrl}
+                      controls
+                      className="w-full rounded-xl bg-slate-100"
+                      style={{ maxHeight: '520px' }}
+                    />
+                  ) : getTourKind(property) === 'image' ? (
+                    <button
+                      onClick={() => openGallery([property.tourUrl!], 0, '3D Tour')}
+                      className="w-full rounded-xl overflow-hidden border border-blue-100 bg-blue-50"
+                    >
+                      <img
+                        src={property.tourUrl}
+                        alt={property.tourFileName || '3D Tour'}
+                        className="w-full h-auto object-contain"
+                        style={{ maxHeight: '520px' }}
+                      />
+                    </button>
+                  ) : (
+                    <a
+                      href={property.tourUrl}
+                      download={property.tourFileName || 'tour-file'}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+                      style={{ fontWeight: 600 }}
+                    >
+                      <Box className="w-4 h-4" />
+                      Download {property.tourFileName || '3D tour file'}
+                    </a>
+                  )
+                ) : (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 text-center border border-blue-100">
+                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Box className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <p className="text-blue-900 mb-2" style={{ fontWeight: 700 }}>3D Tour File Available</p>
+                    <p className="text-blue-600 text-sm mb-4">
+                      This property has a 3D tour file name, but no preview source is attached.
+                    </p>
+                    <div className="bg-white rounded-xl px-4 py-3 inline-flex items-center gap-2 border border-blue-200 text-sm text-blue-800">
+                      <Box className="w-4 h-4" />
+                      <span style={{ fontWeight: 500 }}>{property.tourFileName}</span>
+                    </div>
                   </div>
-                  <p className="text-blue-900 mb-2" style={{ fontWeight: 700 }}>3D Tour File Available</p>
-                  <p className="text-blue-600 text-sm mb-4">
-                    The owner has uploaded a 3D virtual tour for this property.
-                  </p>
-                  <div className="bg-white rounded-xl px-4 py-3 inline-flex items-center gap-2 border border-blue-200 text-sm text-blue-800">
-                    <Box className="w-4 h-4" />
-                    <span style={{ fontWeight: 500 }}>{property.tourFileName}</span>
-                  </div>
-                  <p className="text-blue-500 text-xs mt-3">
-                    Contact the owner to request access to the full 3D tour experience.
-                  </p>
-                </div>
+                )}
               </div>
             )}
 

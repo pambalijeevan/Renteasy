@@ -20,6 +20,8 @@ export interface Property {
   // Images & Media
   images: string[];
   tourFileName?: string;
+  tourUrl?: string;
+  tourMimeType?: string;
   nearbyPlacesImages: string[];
   foodCourtImages: string[];
   // Details

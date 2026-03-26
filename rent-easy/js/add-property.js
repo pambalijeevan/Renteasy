@@ -348,9 +348,9 @@ async function uploadImagesToServer(files, type) {
 
 async function uploadTourFileToServer(file) {
   const formData = new FormData();
-  formData.append('view3d', file);
+  formData.append('tour', file);
   const token = getToken();
-  const res = await fetch(`${API_BASE}/upload/3d`, {
+  const res = await fetch(`${API_BASE}/upload/tour`, {
     method: 'POST',
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     body: formData,

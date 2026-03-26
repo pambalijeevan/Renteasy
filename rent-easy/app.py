@@ -268,6 +268,10 @@ def get_properties():
         result = []
         for p in props:
             p = serialize_dates(p)
+            tour_file = (p.get('tour_file_name') or '').strip()
+            if tour_file.startswith('/uploads/') or tour_file.startswith('data:'):
+                p['tourUrl'] = tour_file
+                p['tourFileName'] = os.path.basename(tour_file) or 'Virtual Tour'
             imgs, nearby_imgs, food_imgs, nearby_places, amenities = fetch_property_extras(cur, p['id'])
             p['images']              = imgs
             p['nearbyPlacesImages']  = nearby_imgs
@@ -295,6 +299,10 @@ def get_property(prop_id):
             return json_err('Property not found.', 404)
 
         p = serialize_dates(p)
+        tour_file = (p.get('tour_file_name') or '').strip()
+        if tour_file.startswith('/uploads/') or tour_file.startswith('data:'):
+            p['tourUrl'] = tour_file
+            p['tourFileName'] = os.path.basename(tour_file) or 'Virtual Tour'
         imgs, nearby_imgs, food_imgs, nearby_places, amenities = fetch_property_extras(cur, prop_id)
         p['images']             = imgs
         p['nearbyPlacesImages'] = nearby_imgs
@@ -328,6 +336,7 @@ def create_property():
     try:
         conn = get_db()
         cur  = conn.cursor()
+        tour_value = data.get('tourUrl') or data.get('tourFileName') or None
 
         cur.execute("""
             INSERT INTO properties
@@ -345,7 +354,7 @@ def create_property():
             int(data['area']),
             data['location'],
             data['furnishing'],
-            data.get('tourFileName') or None,
+            tour_value,
             user['user_id'],
             user.get('name', ''),
             data['ownerPhone'].strip(),

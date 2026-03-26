@@ -80,13 +80,22 @@ async function loadProperty(propId, backLink) {
 
 // Normalize API response vs localStorage shape
 function normalizeProperty(p) {
+  const rawTourName = p.tourFileName || p.tour_file_name || '';
+  const inferredTourUrl = (rawTourName.startsWith('/uploads/') || rawTourName.startsWith('data:'))
+    ? rawTourName
+    : '';
+  const normalizedTourUrl = p.tourUrl || p.view3D || inferredTourUrl || '';
+  const normalizedTourFileName = rawTourName.startsWith('/uploads/')
+    ? rawTourName.split('/').pop() || 'Virtual Tour'
+    : rawTourName;
+
   return {
     ...p,
     ownerName:    p.ownerName    || p.owner_name    || '',
     ownerPhone:   p.ownerPhone   || p.owner_phone   || '',
     ownerEmail:   p.ownerEmail   || p.owner_email   || '',
-    tourFileName: p.tourFileName || p.tour_file_name || '',
-    tourUrl:      p.tourUrl      || p.view3D         || '',
+    tourFileName: normalizedTourFileName,
+    tourUrl:      normalizedTourUrl,
     availableFrom:p.availableFrom|| p.available_from || '',
     nearbyPlacesImages: p.nearbyPlacesImages || [],
     foodCourtImages:    p.foodCourtImages    || [],
@@ -114,11 +123,7 @@ function renderPage() {
   // Badges
   document.getElementById('type-badge').innerHTML =
     `<span class="badge badge-orange" style="font-size:.875rem;">${property.type}</span>`;
-<<<<<<< HEAD
-  if (property.tourFileName) {
-=======
   if (property.tourFileName || property.tourUrl) {
->>>>>>> claude/merge-work-with-main
     document.getElementById('tour-badge').style.display = '';
     document.getElementById('tour-badge').innerHTML =
       `<span class="badge badge-blue" style="display:flex;align-items:center;gap:.375rem;">
@@ -157,11 +162,6 @@ function renderPage() {
   }
 
   // 3D Tour
-<<<<<<< HEAD
-  if (property.tourFileName) {
-    document.getElementById('tour-section').classList.remove('hidden');
-    document.getElementById('tour-file-name').textContent = property.tourFileName;
-=======
   if (property.tourFileName || property.tourUrl) {
     document.getElementById('tour-section').classList.remove('hidden');
     const tourUrl      = property.tourUrl;
@@ -206,7 +206,6 @@ function renderPage() {
           <p style="font-size:.8125rem;color:var(--blue-500);margin-top:.75rem;">Contact the owner to request access to the full 3D tour.</p>
         </div>`;
     }
->>>>>>> claude/merge-work-with-main
   }
 
   // Nearby images

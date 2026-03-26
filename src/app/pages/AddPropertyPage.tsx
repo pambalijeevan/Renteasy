@@ -155,6 +155,9 @@ export function AddPropertyPage() {
   // ─ Images & Media
   const [propertyImages, setPropertyImages] = useState<string[]>([]);
   const [tourFileName, setTourFileName] = useState('');
+  const [tourUrl, setTourUrl] = useState<string | undefined>(undefined);
+  const [tourMimeType, setTourMimeType] = useState<string | undefined>(undefined);
+  const tourReadPromiseRef = useRef<Promise<void>>(Promise.resolve());
   const [nearbyImages, setNearbyImages] = useState<string[]>([]);
   const [foodImages, setFoodImages] = useState<string[]>([]);
 
@@ -177,8 +180,45 @@ export function AddPropertyPage() {
     setPropertyImages((prev) => [...prev, ...compressed]);
   }, []);
 
-  const handleTourFile = (files: FileList) => {
-    if (files[0]) setTourFileName(files[0].name);
+  const handleTourFile = async (files: FileList) => {
+    const file = files[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const inferredMime =
+      ext === 'glb'
+        ? 'model/gltf-binary'
+        : ext === 'gltf'
+          ? 'model/gltf+json'
+          : file.type || undefined;
+
+    try {
+      setTourFileName(file.name);
+      setTourMimeType(inferredMime);
+
+      const readPromise = new Promise<void>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          let dataUrl = String(reader.result || '');
+          if (ext === 'glb') {
+            dataUrl = dataUrl.replace(/^data:application\/octet-stream/i, 'data:model/gltf-binary');
+          } else if (ext === 'gltf') {
+            dataUrl = dataUrl.replace(/^data:application\/octet-stream/i, 'data:model/gltf+json');
+          }
+          setTourUrl(dataUrl || undefined);
+          resolve();
+        };
+        reader.onerror = () => reject(new Error('Failed to read 3D file'));
+        reader.readAsDataURL(file);
+      });
+      tourReadPromiseRef.current = readPromise;
+      await readPromise;
+    } catch {
+      setTourUrl(undefined);
+      setTourMimeType(undefined);
+      tourReadPromiseRef.current = Promise.resolve();
+      toast.error('Unable to process the 3D file. Please try another file.');
+    }
   };
 
   const handleNearbyImages = useCallback(async (files: FileList) => {
@@ -223,7 +263,7 @@ export function AddPropertyPage() {
   };
 
   // ─ Submit ────────────────────────────────────────────────────────────
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -251,6 +291,8 @@ export function AddPropertyPage() {
 
     setLoading(true);
     try {
+      await tourReadPromiseRef.current;
+
       const validNearby = nearbyPlaces.filter(
         (p) => p.name.trim() && p.distance.trim()
       );
@@ -269,6 +311,8 @@ export function AddPropertyPage() {
         furnishing,
         images: propertyImages,
         tourFileName: tourFileName || undefined,
+        tourUrl,
+        tourMimeType,
         nearbyPlacesImages: nearbyImages,
         foodCourtImages: foodImages,
         nearbyPlaces: validNearby,
@@ -552,11 +596,16 @@ export function AddPropertyPage() {
             <SectionTitle step={4}>3D Virtual Tour</SectionTitle>
             <UploadBox
               label="3D Tour File"
-              subLabel="Upload a 3D tour file (.glb, .gltf, .obj, .zip, .mp4). Tenants will see this file is available when viewing the property."
+              subLabel="Upload a 3D tour file (.glb, .gltf, .obj, .zip, .mp4). Tenants can view supported files directly on the property page."
               icon={<Box className="w-6 h-6 text-blue-400" />}
               images={[]}
               onAdd={handleTourFile}
-              onRemove={() => setTourFileName('')}
+              onRemove={() => {
+                setTourFileName('');
+                setTourUrl(undefined);
+                setTourMimeType(undefined);
+                tourReadPromiseRef.current = Promise.resolve();
+              }}
               multiple={false}
               accept=".glb,.gltf,.obj,.zip,.mp4,.360"
               isFileMode
