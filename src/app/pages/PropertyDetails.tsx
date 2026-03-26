@@ -391,16 +391,21 @@ export function PropertyDetails() {
                           alt={`3D tour of ${property.title}`}
                           camera-controls
                           loading="eager"
-                          touch-action="pan-y"
+                          interaction-prompt="none"
+                          touch-action="none"
+                          orbit-sensitivity="0.72"
+                          interpolation-decay="120"
+                          camera-orbit="0deg 75deg 115%"
+                          field-of-view="38deg"
                           min-camera-orbit="auto auto 35%"
                           max-camera-orbit="auto auto 240%"
-                          min-field-of-view="18deg"
-                          max-field-of-view="62deg"
+                          min-field-of-view="20deg"
+                          max-field-of-view="58deg"
                           style={{ width: '100%', height: '520px', background: '#ffffff', cursor: 'grab' }}
                         />
                       </div>
                       <p className="text-blue-600 text-xs text-center">
-                        Drag to rotate and scroll slowly to zoom.
+                        Drag to rotate, scroll to zoom, and pinch on touch devices.
                       </p>
                     </div>
                   ) : tourKind === 'video' ? (

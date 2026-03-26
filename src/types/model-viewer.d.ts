@@ -10,6 +10,11 @@ declare module 'react' {
         'camera-controls'?: boolean | string;
         'auto-rotate'?: boolean | string;
         'touch-action'?: string;
+        'interaction-prompt'?: 'auto' | 'none' | 'when-focused';
+        'orbit-sensitivity'?: number | string;
+        'interpolation-decay'?: number | string;
+        'camera-orbit'?: string;
+        'field-of-view'?: string;
         'min-camera-orbit'?: string;
         'max-camera-orbit'?: string;
         'min-field-of-view'?: string;
