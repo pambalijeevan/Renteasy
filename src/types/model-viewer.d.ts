@@ -10,6 +10,10 @@ declare module 'react' {
         'camera-controls'?: boolean | string;
         'auto-rotate'?: boolean | string;
         'touch-action'?: string;
+        'min-camera-orbit'?: string;
+        'max-camera-orbit'?: string;
+        'min-field-of-view'?: string;
+        'max-field-of-view'?: string;
       };
     }
   }

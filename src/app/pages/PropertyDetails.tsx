@@ -392,6 +392,10 @@ export function PropertyDetails() {
                         auto-rotate
                         loading="eager"
                         touch-action="pan-y"
+                        min-camera-orbit="auto auto 10%"
+                        max-camera-orbit="auto auto 600%"
+                        min-field-of-view="8deg"
+                        max-field-of-view="95deg"
                         style={{ width: '100%', height: '520px', borderRadius: '0.9rem', background: '#f1f5f9', cursor: 'grab' }}
                       />
                       <p className="text-blue-600 text-xs text-center">
