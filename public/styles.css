@@ -688,19 +688,53 @@ body {
 
 .view-3d-container {
     width: 100%;
-    height: 400px;
+    min-height: 400px;
     background: var(--gray-100);
     border-radius: var(--border-radius);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
     color: var(--gray-600);
 }
 
-.view-3d-container img {
+.view-3d-container img,
+.view-3d-container video,
+.view-3d-container .inline-model-viewer {
     width: 100%;
-    height: 100%;
+    height: 340px;
+    border-radius: var(--border-radius);
+    background: var(--white);
+}
+
+.view-3d-container img,
+.view-3d-container video {
     object-fit: contain;
+}
+
+.view-3d-help {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.view-3d-fallback {
+    width: 100%;
+    min-height: 340px;
+    border-radius: var(--border-radius);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
 }
 
 .nearby-images-grid {

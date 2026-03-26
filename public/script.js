@@ -4,6 +4,8 @@ let allProperties = [];
 let allUsers = [];
 let uploadedPropertyImages = [];
 let uploaded3DFile = null;
+let uploaded3DFileName = '';
+let uploaded3DFileType = '';
 let uploadedNearbyImages = [];
 let uploadedFoodImages = [];
 let isSignupMode = true; // Start with signup mode
@@ -298,6 +300,115 @@ function filterProperties() {
 }
 
 // ==== PROPERTY DETAILS ====
+function detect3DViewKind(property) {
+    const src = property.view3D || '';
+    const fileName = (property.view3DName || '').toLowerCase();
+    const fileType = (property.view3DType || '').toLowerCase();
+
+    const isImage =
+        fileType.startsWith('image/') ||
+        src.startsWith('data:image/') ||
+        /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
+
+    const isVideo =
+        fileType.startsWith('video/') ||
+        src.startsWith('data:video/') ||
+        /\.(mp4|webm|mov)$/i.test(fileName);
+
+    const isModel =
+        fileType.includes('gltf') ||
+        fileType.startsWith('model/') ||
+        src.startsWith('data:model/') ||
+        /\.(glb|gltf)$/i.test(fileName);
+
+    if (isImage) return 'image';
+    if (isVideo) return 'video';
+    if (isModel || src.startsWith('data:application/octet-stream')) return 'model';
+    return 'file';
+}
+
+function render3DView(container, property) {
+    const source = property.view3D;
+    const fileLabel = property.view3DName || '3D Virtual Tour';
+    const kind = detect3DViewKind(property);
+
+    container.innerHTML = '';
+
+    if (kind === 'model') {
+        const modelViewer = document.createElement('model-viewer');
+        modelViewer.className = 'inline-model-viewer';
+        modelViewer.setAttribute('src', source);
+        modelViewer.setAttribute('alt', `3D view of ${property.title}`);
+        modelViewer.setAttribute('camera-controls', '');
+        modelViewer.setAttribute('auto-rotate', '');
+        modelViewer.setAttribute('touch-action', 'pan-y');
+        modelViewer.setAttribute('shadow-intensity', '1');
+        container.appendChild(modelViewer);
+
+        const hint = document.createElement('p');
+        hint.className = 'view-3d-help';
+        hint.innerHTML = '<i class="fas fa-mouse-pointer"></i> Drag to rotate and scroll to zoom';
+        container.appendChild(hint);
+        return;
+    }
+
+    if (kind === 'image') {
+        const image = document.createElement('img');
+        image.src = source;
+        image.alt = fileLabel;
+        image.style.cursor = 'pointer';
+        image.onclick = () => openImageModal([source], 0);
+        container.appendChild(image);
+
+        const hint = document.createElement('p');
+        hint.className = 'view-3d-help';
+        hint.innerHTML = '<i class="fas fa-info-circle"></i> Click image to view full size';
+        container.appendChild(hint);
+        return;
+    }
+
+    if (kind === 'video') {
+        const video = document.createElement('video');
+        video.src = source;
+        video.controls = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+        container.appendChild(video);
+        return;
+    }
+
+    const fallback = document.createElement('div');
+    fallback.className = 'view-3d-fallback';
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-cube';
+    icon.style.fontSize = '2.5rem';
+    icon.style.color = 'var(--orange-600)';
+    icon.style.marginBottom = '0.75rem';
+    fallback.appendChild(icon);
+
+    const title = document.createElement('p');
+    title.style.fontWeight = '600';
+    title.style.marginBottom = '0.25rem';
+    title.textContent = fileLabel;
+    fallback.appendChild(title);
+
+    const subtitle = document.createElement('p');
+    subtitle.style.color = 'var(--gray-600)';
+    subtitle.style.marginBottom = '0.75rem';
+    subtitle.textContent = 'Preview is unavailable for this format.';
+    fallback.appendChild(subtitle);
+
+    const downloadLink = document.createElement('a');
+    downloadLink.href = source;
+    downloadLink.download = fileLabel;
+    downloadLink.className = 'btn btn-outline btn-sm view-3d-file-link';
+    downloadLink.innerHTML = '<i class="fas fa-download"></i> Download 3D file';
+    fallback.appendChild(downloadLink);
+
+    container.appendChild(fallback);
+}
+
 function viewPropertyDetails(propertyId) {
     const property = allProperties.find(p => p.id === propertyId);
     if (!property) return;
@@ -319,11 +430,7 @@ function viewPropertyDetails(propertyId) {
     // 3D View
     if (property.view3D) {
         document.getElementById('3d-view-section').style.display = 'block';
-        const is360Image = property.view3D.startsWith('data:image');
-        document.getElementById('3d-view-container').innerHTML = `
-            <img src="${property.view3D}" alt="3D View" style="max-width: 100%; border-radius: 8px; cursor: pointer;" onclick="openImageModal(['${property.view3D}'], 0)">
-            ${is360Image ? '<p style="margin-top: 0.5rem; color: var(--gray-600); text-align: center;"><i class="fas fa-info-circle"></i> Click to view in full size</p>' : ''}
-        `;
+        render3DView(document.getElementById('3d-view-container'), property);
     } else {
         document.getElementById('3d-view-section').style.display = 'none';
     }
@@ -494,6 +601,8 @@ function showAddPropertyModal() {
     document.getElementById('add-property-modal').classList.add('active');
     uploadedPropertyImages = [];
     uploaded3DFile = null;
+    uploaded3DFileName = '';
+    uploaded3DFileType = '';
     uploadedNearbyImages = [];
     uploadedFoodImages = [];
     document.getElementById('add-property-form').reset();
@@ -543,6 +652,9 @@ function removePropertyImage(index) {
 function handle3DUpload(event) {
     const file = event.target.files[0];
     if (file) {
+        uploaded3DFileName = file.name;
+        uploaded3DFileType = file.type || '';
+
         const reader = new FileReader();
         reader.onload = function(e) {
             uploaded3DFile = e.target.result;
@@ -562,6 +674,8 @@ function handle3DUpload(event) {
 
 function remove3DFile() {
     uploaded3DFile = null;
+    uploaded3DFileName = '';
+    uploaded3DFileType = '';
     document.getElementById('3d-preview').innerHTML = '';
     document.getElementById('prop-3d').value = '';
 }
@@ -667,6 +781,8 @@ function handleAddProperty(event) {
         availableFrom: document.getElementById('prop-available').value,
         propertyImages: uploadedPropertyImages,
         view3D: uploaded3DFile,
+        view3DName: uploaded3DFileName,
+        view3DType: uploaded3DFileType,
         nearbyImages: uploadedNearbyImages,
         foodImages: uploadedFoodImages,
         ownerId: currentUser.email,
