@@ -260,13 +260,15 @@ export const subscribeToPropertyUpdates = (onUpdate: () => void): (() => void) =
 
 // Backward compat shims
 export const getCurrentUser = () => {
-  const s = localStorage.getItem('rentEasy_session');
+  const s = sessionStorage.getItem('rentEasy_session') || localStorage.getItem('rentEasy_session');
   return s ? JSON.parse(s) : null;
 };
 export const setCurrentUser = (user: { email: string; role: string; name: string } | null) => {
   if (user) {
-    localStorage.setItem('rentEasy_session', JSON.stringify(user));
+    sessionStorage.setItem('rentEasy_session', JSON.stringify(user));
+    localStorage.removeItem('rentEasy_session');
   } else {
+    sessionStorage.removeItem('rentEasy_session');
     localStorage.removeItem('rentEasy_session');
   }
 };

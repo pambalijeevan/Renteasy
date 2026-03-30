@@ -21,6 +21,7 @@ let currentViewingPropertyId = null;
 const MESSAGE_THREADS_KEY = 'rentEasy_messageThreads';
 const MESSAGES_KEY = 'rentEasy_messages';
 const LOCAL_MESSAGES_UPDATED_EVENT = 'rentEasy:messagesUpdated';
+const CURRENT_USER_KEY = 'currentUser';
 
 // ==== INITIALIZATION ====
 document.addEventListener('DOMContentLoaded', function() {
@@ -52,9 +53,11 @@ function findUser(email, role) {
 
 // ==== AUTHENTICATION ====
 function checkAuthStatus() {
-    const user = localStorage.getItem('currentUser');
+    const user = sessionStorage.getItem(CURRENT_USER_KEY) || localStorage.getItem(CURRENT_USER_KEY);
     if (user) {
         currentUser = JSON.parse(user);
+        sessionStorage.setItem(CURRENT_USER_KEY, user);
+        localStorage.removeItem(CURRENT_USER_KEY);
         if (currentUser.role === 'owner') {
             showOwnerDashboard();
         } else {
@@ -127,7 +130,7 @@ function handleAuth(event, role) {
         saveUsersToStorage();
 
         currentUser = { email, role, name, phone };
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        sessionStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
 
         showToast(`Account created successfully! Welcome, ${name}!`, 'success');
 
@@ -155,7 +158,7 @@ function handleAuth(event, role) {
         }
 
         currentUser = { email: user.email, role: user.role, name: user.name, phone: user.phone };
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        sessionStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
 
         showToast(`Welcome back, ${user.name}!`, 'success');
 
@@ -172,7 +175,8 @@ function logout() {
     activeThreadId = null;
     currentViewingPropertyId = null;
     threadDrafts = {};
-    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem(CURRENT_USER_KEY);
     showPage('landing-page');
     showToast('Logged out successfully', 'success');
 }
@@ -261,7 +265,9 @@ function getThreadsForCurrentUser() {
 
 function getUnreadCountForCurrentUser() {
     if (!currentUser) return 0;
+    const threadIds = new Set(getThreadsForCurrentUser().map((thread) => thread.threadId));
     return messages.filter((m) => {
+        if (!threadIds.has(m.threadId)) return false;
         if (m.senderEmail === currentUser.email) return false;
         return !Array.isArray(m.readBy) || !m.readBy.includes(currentUser.email);
     }).length;
@@ -875,6 +881,9 @@ function renderMessagesPage() {
         activeThreadId = threads[0].threadId;
     }
 
+    // Mark selected thread as read before rendering unread pills so counts update immediately.
+    markThreadRead(activeThreadId, currentUser.email);
+
     listEl.innerHTML = threads.map((thread) => {
         const threadMessages = getThreadMessages(thread.threadId);
         const last = threadMessages[threadMessages.length - 1];
@@ -898,7 +907,6 @@ function renderMessagesPage() {
     const activeThread = threads.find((t) => t.threadId === activeThreadId);
     if (!activeThread) return;
 
-    markThreadRead(activeThread.threadId, currentUser.email);
     const activeMessages = getThreadMessages(activeThread.threadId);
     const otherName = currentUser.role === 'owner' ? activeThread.tenantName : activeThread.ownerName;
     chatHeader.textContent = `${otherName} • ${activeThread.propertyTitle}`;

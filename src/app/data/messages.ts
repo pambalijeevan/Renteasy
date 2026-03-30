@@ -131,6 +131,9 @@ export const markThreadRead = (threadId: string, userEmail: string) => {
 
   for (const msg of messages) {
     if (msg.threadId !== threadId) continue;
+    if (!Array.isArray(msg.readBy)) {
+      msg.readBy = [];
+    }
     if (!msg.readBy.includes(userEmail)) {
       msg.readBy.push(userEmail);
       changed = true;
@@ -144,8 +147,13 @@ export const markThreadRead = (threadId: string, userEmail: string) => {
 };
 
 export const getUnreadCountForUser = (user: SessionUser): number => {
+  const visibleThreadIds = new Set(
+    getThreadsForUser(user).map((thread) => thread.threadId)
+  );
   return getMessages().filter((m) => (
-    m.senderEmail !== user.email && !m.readBy.includes(user.email)
+    visibleThreadIds.has(m.threadId) &&
+    m.senderEmail !== user.email &&
+    (!Array.isArray(m.readBy) || !m.readBy.includes(user.email))
   )).length;
 };
 

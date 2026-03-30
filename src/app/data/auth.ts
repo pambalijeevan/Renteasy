@@ -87,7 +87,7 @@ export const loginUser = (
 };
 
 export const getCurrentSession = (): SessionUser | null => {
-  const stored = localStorage.getItem(SESSION_KEY);
+  const stored = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
   if (stored) return JSON.parse(stored);
 
   // Backward compatibility: support session created by legacy/public flow.
@@ -103,7 +103,9 @@ export const getCurrentSession = (): SessionUser | null => {
       phone: parsed.phone || '',
       role: parsed.role,
     };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(LEGACY_SESSION_KEY);
     return session;
   } catch {
     return null;
@@ -112,9 +114,13 @@ export const getCurrentSession = (): SessionUser | null => {
 
 export const setCurrentSession = (user: SessionUser | null) => {
   if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    localStorage.setItem(LEGACY_SESSION_KEY, JSON.stringify(user));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    sessionStorage.setItem(LEGACY_SESSION_KEY, JSON.stringify(user));
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(LEGACY_SESSION_KEY);
   } else {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(LEGACY_SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(LEGACY_SESSION_KEY);
   }

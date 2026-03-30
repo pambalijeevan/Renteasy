@@ -143,7 +143,7 @@ export function MessagesPage() {
                   const threadMsgs = getMessagesForThread(thread.threadId);
                   const last = threadMsgs[threadMsgs.length - 1];
                   const unread = threadMsgs.filter(
-                    (m) => m.senderEmail !== user.email && !m.readBy.includes(user.email)
+                    (m) => m.senderEmail !== user.email && (!Array.isArray(m.readBy) || !m.readBy.includes(user.email))
                   ).length;
                   const otherName = user.role === 'owner' ? thread.tenantName : thread.ownerName;
                   return (
