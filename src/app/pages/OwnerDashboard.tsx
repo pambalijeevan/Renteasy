@@ -2,25 +2,44 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import {
   Building2, Plus, LogOut, Home, MapPin, Bed, Bath, Maximize,
-  Trash2, Eye, Phone, Calendar, Image as ImageIcon, Box,
+  Trash2, Eye, Phone, Calendar, Image as ImageIcon, Box, MessageCircle,
 } from 'lucide-react';
-import { getCurrentSession, setCurrentSession } from '../data/auth';
-import { getStoredProperties, deleteProperty, type Property } from '../data/properties';
+import { getCurrentSession, setCurrentSession, subscribeToSessionUpdates, type SessionUser } from '../data/auth';
+import { getStoredProperties, deleteProperty, subscribeToPropertyUpdates, type Property } from '../data/properties';
+import { getUnreadCountForUser, subscribeToMessageUpdates } from '../data/messages';
 import { toast } from 'sonner';
 
 export function OwnerDashboard() {
   const navigate = useNavigate();
-  const user = getCurrentSession();
+  const [user, setUser] = useState<SessionUser | null>(() => getCurrentSession());
   const [properties, setProperties] = useState<Property[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSessionUpdates(() => {
+      setUser(getCurrentSession());
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!user || user.role !== 'owner') {
       navigate('/login');
       return;
     }
-    loadProperties();
-  }, []);
+    const refreshProperties = () => loadProperties();
+    refreshProperties();
+    const unsubscribeProperties = subscribeToPropertyUpdates(refreshProperties);
+    setUnread(getUnreadCountForUser(user));
+    const unsubscribe = subscribeToMessageUpdates(() => {
+      setUnread(getUnreadCountForUser(user));
+    });
+    return () => {
+      unsubscribe();
+      unsubscribeProperties();
+    };
+  }, [navigate, user?.email, user?.role]);
 
   const loadProperties = () => {
     const all = getStoredProperties();
@@ -65,6 +84,18 @@ export function OwnerDashboard() {
               </div>
               <span className="text-gray-700 text-sm">{user?.name}</span>
             </div>
+            <button
+              onClick={() => navigate('/messages')}
+              className="relative flex items-center gap-2 px-3 py-2 border border-orange-200 text-orange-600 rounded-xl hover:bg-orange-50 transition-colors text-sm"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Messages</span>
+              {unread > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-xs flex items-center justify-center" style={{ fontWeight: 700 }}>
+                  {unread}
+                </span>
+              )}
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm"

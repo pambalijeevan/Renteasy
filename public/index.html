@@ -184,6 +184,10 @@
                     </div>
                     <div class="header-right">
                         <span class="welcome-text">Welcome, <span id="owner-name-display"></span></span>
+                        <button class="btn btn-outline btn-sm messages-nav-btn" onclick="openMessagesPage()">
+                            <i class="fas fa-comments"></i> Messages
+                            <span id="owner-messages-badge" class="messages-badge hidden">0</span>
+                        </button>
                         <button class="btn btn-outline btn-sm" onclick="logout()">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </button>
@@ -219,6 +223,10 @@
                     </div>
                     <div class="header-right">
                         <span class="welcome-text">Welcome, <span id="tenant-name-display"></span></span>
+                        <button class="btn btn-outline btn-sm messages-nav-btn" onclick="openMessagesPage()">
+                            <i class="fas fa-comments"></i> Messages
+                            <span id="tenant-messages-badge" class="messages-badge hidden">0</span>
+                        </button>
                         <button class="btn btn-outline btn-sm" onclick="logout()">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </button>
@@ -258,9 +266,15 @@
                         <i class="fas fa-home"></i>
                         <span>Rent Easy</span>
                     </div>
-                    <button class="btn btn-outline" onclick="goBackToDashboard()">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </button>
+                    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                        <button class="btn btn-outline messages-nav-btn" onclick="openMessagesPage()">
+                            <i class="fas fa-comments"></i> Messages
+                            <span id="details-messages-badge" class="messages-badge hidden">0</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="goBackToDashboard()">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -340,6 +354,53 @@
                             <div class="divider"></div>
 
                             <div id="contact-section"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Messages Page -->
+    <div id="messages-page" class="page">
+        <header class="header dashboard-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-home"></i>
+                        <span>Rent Easy</span>
+                    </div>
+                    <button class="btn btn-outline" onclick="goBackFromMessages()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <div class="container">
+                <div class="messages-page-layout">
+                    <div class="messages-thread-list-panel">
+                        <div class="messages-panel-header">
+                            <h2>Conversations</h2>
+                        </div>
+                        <div id="messages-thread-list" class="messages-thread-list"></div>
+                    </div>
+                    <div class="messages-chat-panel">
+                        <div id="messages-chat-header" class="messages-chat-header">
+                            Select a conversation
+                        </div>
+                        <div id="messages-chat-empty" class="messages-chat-empty">
+                            No conversation selected yet.
+                        </div>
+                        <div id="messages-chat-content" class="messages-chat-content" style="display:none;">
+                            <div id="messages-chat-log" class="messages-chat-log"></div>
+                            <div class="messages-compose">
+                                <textarea id="messages-compose-input" rows="3" placeholder="Type your message..."></textarea>
+                                <button class="btn btn-primary btn-sm" onclick="sendActiveThreadMessage()">
+                                    <i class="fas fa-paper-plane"></i> Send
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

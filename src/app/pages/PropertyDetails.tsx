@@ -7,8 +7,9 @@ import {
   ChevronLeft, ChevronRight, Expand, Copy, MessageCircle,
   Home,
 } from 'lucide-react';
-import { getCurrentSession } from '../data/auth';
+import { getCurrentSession, subscribeToSessionUpdates, type SessionUser } from '../data/auth';
 import { getStoredProperties, type Property, type NearbyPlace } from '../data/properties';
+import { getOrCreateThread, getUnreadCountForUser, sendThreadMessage, subscribeToMessageUpdates } from '../data/messages';
 import { getTourAssetBlob } from '../data/tourStorage';
 import { ImageGalleryModal } from '../components/ImageGalleryModal';
 import { toast } from 'sonner';
@@ -69,7 +70,7 @@ const getTourKind = (url: string, fileName: string, mimeType: string): TourKind 
 export function PropertyDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = getCurrentSession();
+  const [user, setUser] = useState<SessionUser | null>(() => getCurrentSession());
   const [property, setProperty] = useState<Property | null>(null);
   const [tourViewUrl, setTourViewUrl] = useState<string | null>(null);
   const [tourResolving, setTourResolving] = useState(false);
@@ -85,6 +86,14 @@ export function PropertyDetails() {
   const [contactSent, setContactSent] = useState(false);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryMessage, setInquiryMessage] = useState('');
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSessionUpdates(() => {
+      setUser(getCurrentSession());
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -101,6 +110,15 @@ export function PropertyDetails() {
     setProperty(found);
     setInquiryMessage(`Hi, I'm interested in renting "${found.title}" listed on Rent Easy. Could you please provide more details? Thank you.`);
   }, [id, user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    setUnread(getUnreadCountForUser(user));
+    const unsubscribe = subscribeToMessageUpdates(() => {
+      setUnread(getUnreadCountForUser(user));
+    });
+    return () => unsubscribe();
+  }, [user?.email, user?.role]);
 
   useEffect(() => {
     let shouldIgnore = false;
@@ -152,12 +170,19 @@ export function PropertyDetails() {
   };
 
   const handleContact = () => {
-    if (!inquiryMessage.trim()) return;
+    if (!user || user.role !== 'tenant' || !property) return;
+    if (!inquiryMessage.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+    const thread = getOrCreateThread(property, user);
+    sendThreadMessage(thread.threadId, user, inquiryMessage);
     setContactSent(true);
     setShowInquiryForm(false);
     toast.success(
-      `Inquiry sent to ${property?.ownerName}! They will contact you at ${user?.phone || user?.email}.`
+      `Inquiry sent to ${property.ownerName}!`
     );
+    navigate('/messages', { state: { threadId: thread.threadId } });
   };
 
   const copyPhone = () => {
@@ -198,14 +223,29 @@ export function PropertyDetails() {
               <span className="text-orange-600" style={{ fontWeight: 700 }}>Rent Easy</span>
             </div>
           </div>
-          <Link
-            to={backLink}
-            className="text-sm text-orange-600 hover:underline flex items-center gap-1"
-            style={{ fontWeight: 600 }}
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/messages')}
+              className="relative text-sm text-orange-600 hover:underline flex items-center gap-1"
+              style={{ fontWeight: 600 }}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Messages
+              {unread > 0 && (
+                <span className="absolute -top-2 -right-3 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-xs flex items-center justify-center" style={{ fontWeight: 700 }}>
+                  {unread}
+                </span>
+              )}
+            </button>
+            <Link
+              to={backLink}
+              className="text-sm text-orange-600 hover:underline flex items-center gap-1"
+              style={{ fontWeight: 600 }}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -627,6 +667,18 @@ export function PropertyDetails() {
                               <Phone className="w-4 h-4" />
                               Call {property.ownerPhone}
                             </a>
+                            <button
+                              onClick={() => {
+                                if (!user || user.role !== 'tenant') return;
+                                const thread = getOrCreateThread(property, user);
+                                navigate('/messages', { state: { threadId: thread.threadId } });
+                              }}
+                              className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm"
+                              style={{ fontWeight: 600 }}
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              Open Messages
+                            </button>
                           </>
                         )}
                       </>
@@ -643,6 +695,16 @@ export function PropertyDetails() {
                         >
                           Send another inquiry
                         </button>
+                        <button
+                          onClick={() => {
+                            if (!user || user.role !== 'tenant') return;
+                            const thread = getOrCreateThread(property, user);
+                            navigate('/messages', { state: { threadId: thread.threadId } });
+                          }}
+                          className="mt-2 block w-full text-xs text-orange-600 underline"
+                        >
+                          Open conversation
+                        </button>
                       </div>
                     )}
                   </div>
@@ -651,12 +713,18 @@ export function PropertyDetails() {
                     <p className="text-orange-800 text-sm" style={{ fontWeight: 700 }}>
                       This is your property listing
                     </p>
-                    <Link
-                      to="/owner/dashboard"
+                    <button
+                      onClick={() => navigate('/owner/dashboard')}
                       className="mt-2 inline-block text-sm text-orange-600 underline"
                     >
                       Manage in Dashboard
-                    </Link>
+                    </button>
+                    <button
+                      onClick={() => navigate('/messages')}
+                      className="mt-1 inline-block text-sm text-orange-600 underline"
+                    >
+                      Open Messages
+                    </button>
                   </div>
                 ) : null}
               </div>

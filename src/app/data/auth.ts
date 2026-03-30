@@ -16,6 +16,10 @@ export interface SessionUser {
   role: 'owner' | 'tenant';
 }
 
+const SESSION_KEY = 'rentEasy_session';
+const LEGACY_SESSION_KEY = 'currentUser';
+export const SESSION_SYNC_EVENT = 'rentEasy:sessionUpdated';
+
 export const getStoredAccounts = (): UserAccount[] => {
   const stored = localStorage.getItem('rentEasy_accounts');
   return stored ? JSON.parse(stored) : [];
@@ -83,16 +87,53 @@ export const loginUser = (
 };
 
 export const getCurrentSession = (): SessionUser | null => {
-  const stored = localStorage.getItem('rentEasy_session');
-  return stored ? JSON.parse(stored) : null;
+  const stored = localStorage.getItem(SESSION_KEY);
+  if (stored) return JSON.parse(stored);
+
+  // Backward compatibility: support session created by legacy/public flow.
+  const legacy = localStorage.getItem(LEGACY_SESSION_KEY);
+  if (!legacy) return null;
+  try {
+    const parsed = JSON.parse(legacy);
+    if (!parsed?.email || !parsed?.role || !parsed?.name) return null;
+    const session: SessionUser = {
+      id: parsed.id || parsed.email,
+      name: parsed.name,
+      email: parsed.email,
+      phone: parsed.phone || '',
+      role: parsed.role,
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return session;
+  } catch {
+    return null;
+  }
 };
 
 export const setCurrentSession = (user: SessionUser | null) => {
   if (user) {
-    localStorage.setItem('rentEasy_session', JSON.stringify(user));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    localStorage.setItem(LEGACY_SESSION_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem('rentEasy_session');
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(LEGACY_SESSION_KEY);
   }
+  window.dispatchEvent(new Event(SESSION_SYNC_EVENT));
+};
+
+export const subscribeToSessionUpdates = (onUpdate: () => void): (() => void) => {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === SESSION_KEY || event.key === LEGACY_SESSION_KEY) onUpdate();
+  };
+  const onLocal = () => onUpdate();
+
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(SESSION_SYNC_EVENT, onLocal);
+
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(SESSION_SYNC_EVENT, onLocal);
+  };
 };
 
 // Backward compatibility aliases

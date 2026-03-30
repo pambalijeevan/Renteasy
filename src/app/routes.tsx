@@ -6,6 +6,7 @@ import { OwnerDashboard } from './pages/OwnerDashboard';
 import { AddPropertyPage } from './pages/AddPropertyPage';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { PropertyDetails } from './pages/PropertyDetails';
+import { MessagesPage } from './pages/MessagesPage';
 import { NotFound } from './pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
   { path: '/owner/dashboard', Component: OwnerDashboard },
   { path: '/owner/add-property', Component: AddPropertyPage },
   { path: '/tenant/dashboard', Component: TenantDashboard },
+  { path: '/messages', Component: MessagesPage },
   { path: '/property/:id', Component: PropertyDetails },
   { path: '*', Component: NotFound },
 ]);

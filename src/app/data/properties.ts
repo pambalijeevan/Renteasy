@@ -38,6 +38,8 @@ export interface Property {
   createdAt: string;
 }
 
+export const PROPERTY_SYNC_EVENT = 'rentEasy:propertiesUpdated';
+
 // ─── Mock Hyderabad Data ────────────────────────────────────────────────
 export const mockProperties: Property[] = [
   {
@@ -229,6 +231,7 @@ export const saveProperty = (property: Property) => {
   const existing: Property[] = stored ? JSON.parse(stored) : [];
   existing.push(property);
   localStorage.setItem('rentEasy_properties', JSON.stringify(existing));
+  window.dispatchEvent(new Event(PROPERTY_SYNC_EVENT));
 };
 
 export const deleteProperty = (propertyId: string) => {
@@ -237,6 +240,22 @@ export const deleteProperty = (propertyId: string) => {
   const existing: Property[] = JSON.parse(stored);
   const updated = existing.filter((p) => p.id !== propertyId);
   localStorage.setItem('rentEasy_properties', JSON.stringify(updated));
+  window.dispatchEvent(new Event(PROPERTY_SYNC_EVENT));
+};
+
+export const subscribeToPropertyUpdates = (onUpdate: () => void): (() => void) => {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === 'rentEasy_properties') onUpdate();
+  };
+  const onLocal = () => onUpdate();
+
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(PROPERTY_SYNC_EVENT, onLocal);
+
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(PROPERTY_SYNC_EVENT, onLocal);
+  };
 };
 
 // Backward compat shims

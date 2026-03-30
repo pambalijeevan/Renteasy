@@ -11,11 +11,23 @@ let uploadedFoodImages = [];
 let isSignupMode = true; // Start with signup mode
 let currentImageGallery = [];
 let currentImageIndex = 0;
+let messageThreads = [];
+let messages = [];
+let activeThreadId = null;
+let threadDrafts = {};
+let messagesReturnPage = 'landing-page';
+let currentViewingPropertyId = null;
+
+const MESSAGE_THREADS_KEY = 'rentEasy_messageThreads';
+const MESSAGES_KEY = 'rentEasy_messages';
+const LOCAL_MESSAGES_UPDATED_EVENT = 'rentEasy:messagesUpdated';
 
 // ==== INITIALIZATION ====
 document.addEventListener('DOMContentLoaded', function() {
     loadUsersFromStorage();
     loadPropertiesFromStorage();
+    loadMessagingFromStorage();
+    bindMessagingSyncEvents();
     checkAuthStatus();
 });
 
@@ -48,6 +60,7 @@ function checkAuthStatus() {
         } else {
             showTenantDashboard();
         }
+        updateMessageBadges();
     } else {
         showPage('landing-page');
     }
@@ -156,6 +169,9 @@ function handleAuth(event, role) {
 
 function logout() {
     currentUser = null;
+    activeThreadId = null;
+    currentViewingPropertyId = null;
+    threadDrafts = {};
     localStorage.removeItem('currentUser');
     showPage('landing-page');
     showToast('Logged out successfully', 'success');
@@ -176,13 +192,173 @@ function savePropertiesToStorage() {
     localStorage.setItem('properties', JSON.stringify(allProperties));
 }
 
+// ==== MESSAGING DATA ====
+function loadMessagingFromStorage() {
+    const storedThreads = localStorage.getItem(MESSAGE_THREADS_KEY);
+    const storedMessages = localStorage.getItem(MESSAGES_KEY);
+    messageThreads = storedThreads ? JSON.parse(storedThreads) : [];
+    messages = storedMessages ? JSON.parse(storedMessages) : [];
+}
+
+function saveMessagingToStorage() {
+    localStorage.setItem(MESSAGE_THREADS_KEY, JSON.stringify(messageThreads));
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+    window.dispatchEvent(new CustomEvent(LOCAL_MESSAGES_UPDATED_EVENT));
+}
+
+function bindMessagingSyncEvents() {
+    window.addEventListener('storage', function(event) {
+        if (event.key !== MESSAGE_THREADS_KEY && event.key !== MESSAGES_KEY) {
+            return;
+        }
+        loadMessagingFromStorage();
+        refreshMessagingUI();
+    });
+
+    window.addEventListener(LOCAL_MESSAGES_UPDATED_EVENT, function() {
+        refreshMessagingUI();
+    });
+}
+
+function refreshMessagingUI() {
+    updateMessageBadges();
+
+    if (document.getElementById('messages-page')?.classList.contains('active')) {
+        renderMessagesPage();
+    }
+
+    if (document.getElementById('property-details')?.classList.contains('active') && currentViewingPropertyId) {
+        const property = allProperties.find((p) => p.id === currentViewingPropertyId);
+        if (property && currentUser?.role === 'tenant') {
+            renderTenantContactSection(property);
+        }
+    }
+}
+
+function formatTime(ts) {
+    return new Date(ts).toLocaleString();
+}
+
+function makeThreadId(propertyId, ownerEmail, tenantEmail) {
+    return [propertyId, ownerEmail.toLowerCase(), tenantEmail.toLowerCase()].join('__');
+}
+
+function getThreadMessages(threadId) {
+    return messages
+        .filter((m) => m.threadId === threadId)
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+}
+
+function getThreadsForCurrentUser() {
+    if (!currentUser) return [];
+    const filtered = messageThreads.filter((thread) => (
+        currentUser.role === 'owner'
+            ? thread.ownerEmail === currentUser.email
+            : thread.tenantEmail === currentUser.email
+    ));
+    return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+}
+
+function getUnreadCountForCurrentUser() {
+    if (!currentUser) return 0;
+    return messages.filter((m) => {
+        if (m.senderEmail === currentUser.email) return false;
+        return !Array.isArray(m.readBy) || !m.readBy.includes(currentUser.email);
+    }).length;
+}
+
+function updateMessageBadges() {
+    const unread = getUnreadCountForCurrentUser();
+    ['owner-messages-badge', 'tenant-messages-badge', 'details-messages-badge'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = unread;
+        if (unread > 0) {
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    });
+}
+
+function ensureThread(property, tenantUser) {
+    const threadId = makeThreadId(property.id, property.ownerEmail, tenantUser.email);
+    let thread = messageThreads.find((t) => t.threadId === threadId);
+
+    if (!thread) {
+        const now = new Date().toISOString();
+        thread = {
+            threadId,
+            propertyId: property.id,
+            propertyTitle: property.title,
+            ownerEmail: property.ownerEmail,
+            ownerName: property.ownerName,
+            tenantEmail: tenantUser.email,
+            tenantName: tenantUser.name,
+            createdAt: now,
+            updatedAt: now,
+        };
+        messageThreads.push(thread);
+    }
+
+    return thread;
+}
+
+function appendMessage(threadId, senderRole, senderEmail, text) {
+    const now = new Date().toISOString();
+    const cleaned = (text || '').trim();
+    if (!cleaned) return null;
+
+    const msg = {
+        id: `msg_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+        threadId,
+        senderRole,
+        senderEmail,
+        text: cleaned,
+        timestamp: now,
+        readBy: [senderEmail],
+    };
+    messages.push(msg);
+
+    const thread = messageThreads.find((t) => t.threadId === threadId);
+    if (thread) {
+        thread.updatedAt = now;
+    }
+
+    saveMessagingToStorage();
+    return msg;
+}
+
+function markThreadRead(threadId, userEmail) {
+    let changed = false;
+    messages.forEach((m) => {
+        if (m.threadId !== threadId) return;
+        if (!Array.isArray(m.readBy)) {
+            m.readBy = [];
+        }
+        if (!m.readBy.includes(userEmail)) {
+            m.readBy.push(userEmail);
+            changed = true;
+        }
+    });
+    if (changed) {
+        saveMessagingToStorage();
+    }
+}
+
+function getThreadByPropertyForTenant(propertyId, tenantEmail) {
+    return messageThreads.find((t) => t.propertyId === propertyId && t.tenantEmail === tenantEmail);
+}
+
 // ==== OWNER DASHBOARD ====
 function showOwnerDashboard() {
     showPage('owner-dashboard');
+    messagesReturnPage = 'owner-dashboard';
     document.getElementById('owner-name-display').textContent = currentUser.name;
     
     const ownerProperties = allProperties.filter(p => p.ownerEmail === currentUser.email);
     renderOwnerProperties(ownerProperties);
+    updateMessageBadges();
 }
 
 function renderOwnerProperties(properties) {
@@ -222,6 +398,9 @@ function renderOwnerProperties(properties) {
                     <button class="btn btn-outline btn-sm" onclick="viewPropertyDetails('${property.id}')">
                         <i class="fas fa-eye"></i> View
                     </button>
+                    <button class="btn btn-outline btn-sm" onclick="openMessagesForProperty('${property.id}')">
+                        <i class="fas fa-comments"></i> View Queries
+                    </button>
                     <button class="btn btn-outline btn-sm" onclick="deleteProperty('${property.id}')">
                         <i class="fas fa-trash"></i> Delete
                     </button>
@@ -243,8 +422,10 @@ function deleteProperty(id) {
 // ==== TENANT DASHBOARD ====
 function showTenantDashboard() {
     showPage('tenant-dashboard');
+    messagesReturnPage = 'tenant-dashboard';
     document.getElementById('tenant-name-display').textContent = currentUser.name;
     renderTenantProperties(allProperties);
+    updateMessageBadges();
 }
 
 function renderTenantProperties(properties) {
@@ -413,6 +594,8 @@ function viewPropertyDetails(propertyId) {
     const property = allProperties.find(p => p.id === propertyId);
     if (!property) return;
 
+    currentViewingPropertyId = propertyId;
+    messagesReturnPage = 'property-details';
     showPage('property-details');
 
     // Property Images Gallery
@@ -535,23 +718,21 @@ function viewPropertyDetails(propertyId) {
     // Contact Section
     const contactSection = document.getElementById('contact-section');
     if (currentUser.role === 'tenant') {
-        contactSection.innerHTML = `
-            <button class="btn btn-primary btn-block btn-lg" onclick="contactOwner('${property.id}')">
-                <i class="fas fa-phone"></i> Contact Owner
-            </button>
-            <p style="text-align: center; font-size: 0.75rem; color: var(--gray-600); margin-top: 0.5rem;">
-                The owner will receive your contact information
-            </p>
-        `;
+        renderTenantContactSection(property);
     } else if (currentUser.email === property.ownerEmail) {
         contactSection.innerHTML = `
             <div style="background: var(--orange-50); padding: 1rem; border-radius: var(--border-radius); text-align: center;">
                 <p style="color: var(--orange-800); font-weight: 500; font-size: 0.875rem;">
                     <i class="fas fa-info-circle"></i> This is your property listing
                 </p>
+                <button class="btn btn-outline btn-sm" style="margin-top:0.75rem;" onclick="openMessagesForProperty('${property.id}')">
+                    <i class="fas fa-comments"></i> View Queries
+                </button>
             </div>
         `;
     }
+
+    updateMessageBadges();
 }
 
 function changeMainImage(imageSrc, event) {
@@ -562,8 +743,205 @@ function changeMainImage(imageSrc, event) {
     }
 }
 
+function renderTenantContactSection(property) {
+    const contactSection = document.getElementById('contact-section');
+    if (!contactSection || !currentUser) return;
+
+    const existingThread = getThreadByPropertyForTenant(property.id, currentUser.email);
+    const previewMessages = existingThread ? getThreadMessages(existingThread.threadId).slice(-3) : [];
+    const defaultInquiry = `Hi, I'm interested in renting "${property.title}". Could you please share more details?`;
+
+    contactSection.innerHTML = `
+        <div class="property-inquiry-box">
+            <textarea id="property-inquiry-message" rows="3" placeholder="Write your message to owner...">${defaultInquiry}</textarea>
+            <button class="btn btn-primary btn-block btn-sm" onclick="contactOwner('${property.id}')">
+                <i class="fas fa-paper-plane"></i> Send Inquiry
+            </button>
+            <button class="btn btn-outline btn-block btn-sm" onclick="openMessagesForProperty('${property.id}')">
+                <i class="fas fa-comments"></i> Open Full Conversation
+            </button>
+        </div>
+        <div class="property-chat-preview">
+            <p class="property-chat-preview-title">Recent Messages</p>
+            ${
+                previewMessages.length
+                    ? previewMessages.map((msg) => `
+                        <div class="property-chat-preview-msg ${msg.senderEmail === currentUser.email ? 'is-me' : 'is-other'}">
+                            <p>${msg.text}</p>
+                            <span>${formatTime(msg.timestamp)}</span>
+                        </div>
+                    `).join('')
+                    : '<p class="property-chat-preview-empty">No messages yet for this property.</p>'
+            }
+        </div>
+    `;
+}
+
 function contactOwner(propertyId) {
-    showToast('Contact request sent! The owner will reach out to you soon.', 'success');
+    if (!currentUser || currentUser.role !== 'tenant') return;
+
+    const property = allProperties.find((p) => p.id === propertyId);
+    if (!property) {
+        showToast('Property not found', 'error');
+        return;
+    }
+
+    const input = document.getElementById('property-inquiry-message');
+    const inquiry = (input?.value || '').trim();
+    if (!inquiry) {
+        showToast('Please write a message before sending.', 'error');
+        return;
+    }
+
+    const thread = ensureThread(property, currentUser);
+    appendMessage(thread.threadId, 'tenant', currentUser.email, inquiry);
+    activeThreadId = thread.threadId;
+
+    showToast('Inquiry sent successfully. The owner can now see your message.', 'success');
+    renderTenantContactSection(property);
+}
+
+function openMessagesForProperty(propertyId) {
+    if (!currentUser) return;
+
+    const property = allProperties.find((p) => p.id === propertyId);
+    if (!property) {
+        showToast('Property not found', 'error');
+        return;
+    }
+
+    if (currentUser.role === 'owner') {
+        const ownerThreads = getThreadsForCurrentUser().filter((t) => t.propertyId === propertyId);
+        if (!ownerThreads.length) {
+            showToast('No tenant queries for this property yet.', 'error');
+            openMessagesPage();
+            return;
+        }
+        activeThreadId = ownerThreads[0].threadId;
+        openMessagesPage();
+        return;
+    }
+
+    const thread = ensureThread(property, currentUser);
+    activeThreadId = thread.threadId;
+    openMessagesPage();
+}
+
+function openMessagesPage() {
+    if (!currentUser) {
+        showPage('login-page');
+        return;
+    }
+    const activePage = document.querySelector('.page.active')?.id;
+    if (activePage && activePage !== 'messages-page') {
+        messagesReturnPage = activePage;
+    }
+    showPage('messages-page');
+    renderMessagesPage();
+}
+
+function goBackFromMessages() {
+    if (messagesReturnPage === 'property-details' && currentViewingPropertyId) {
+        viewPropertyDetails(currentViewingPropertyId);
+        return;
+    }
+    goBackToDashboard();
+}
+
+function renderMessagesPage() {
+    if (!currentUser) return;
+
+    const threads = getThreadsForCurrentUser();
+    const listEl = document.getElementById('messages-thread-list');
+    const chatHeader = document.getElementById('messages-chat-header');
+    const emptyEl = document.getElementById('messages-chat-empty');
+    const contentEl = document.getElementById('messages-chat-content');
+    const chatLog = document.getElementById('messages-chat-log');
+    const composeInput = document.getElementById('messages-compose-input');
+
+    if (!listEl || !chatHeader || !emptyEl || !contentEl || !chatLog || !composeInput) return;
+
+    if (!threads.length) {
+        listEl.innerHTML = '<div class="messages-thread-empty">No conversations yet.</div>';
+        activeThreadId = null;
+        chatHeader.textContent = 'Select a conversation';
+        emptyEl.style.display = 'block';
+        contentEl.style.display = 'none';
+        updateMessageBadges();
+        return;
+    }
+
+    if (!activeThreadId || !threads.some((t) => t.threadId === activeThreadId)) {
+        activeThreadId = threads[0].threadId;
+    }
+
+    listEl.innerHTML = threads.map((thread) => {
+        const threadMessages = getThreadMessages(thread.threadId);
+        const last = threadMessages[threadMessages.length - 1];
+        const otherName = currentUser.role === 'owner' ? thread.tenantName : thread.ownerName;
+        const unread = threadMessages.filter((m) => (
+            m.senderEmail !== currentUser.email &&
+            (!Array.isArray(m.readBy) || !m.readBy.includes(currentUser.email))
+        )).length;
+        return `
+            <button class="messages-thread-item ${thread.threadId === activeThreadId ? 'active' : ''}" onclick="setActiveThread('${thread.threadId}')">
+                <div class="messages-thread-top">
+                    <p class="messages-thread-name">${otherName}</p>
+                    ${unread ? `<span class="messages-thread-unread">${unread}</span>` : ''}
+                </div>
+                <p class="messages-thread-property">${thread.propertyTitle}</p>
+                <p class="messages-thread-last">${last ? last.text : 'No messages yet'}</p>
+            </button>
+        `;
+    }).join('');
+
+    const activeThread = threads.find((t) => t.threadId === activeThreadId);
+    if (!activeThread) return;
+
+    markThreadRead(activeThread.threadId, currentUser.email);
+    const activeMessages = getThreadMessages(activeThread.threadId);
+    const otherName = currentUser.role === 'owner' ? activeThread.tenantName : activeThread.ownerName;
+    chatHeader.textContent = `${otherName} • ${activeThread.propertyTitle}`;
+
+    chatLog.innerHTML = activeMessages.map((msg) => `
+        <div class="messages-bubble-row ${msg.senderEmail === currentUser.email ? 'is-me' : 'is-other'}">
+            <div class="messages-bubble">
+                <p>${msg.text}</p>
+                <span>${formatTime(msg.timestamp)}</span>
+            </div>
+        </div>
+    `).join('');
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    emptyEl.style.display = 'none';
+    contentEl.style.display = 'flex';
+
+    composeInput.value = threadDrafts[activeThreadId] || '';
+    composeInput.oninput = function() {
+        threadDrafts[activeThreadId] = composeInput.value;
+    };
+}
+
+function setActiveThread(threadId) {
+    activeThreadId = threadId;
+    renderMessagesPage();
+}
+
+function sendActiveThreadMessage() {
+    if (!currentUser || !activeThreadId) return;
+
+    const composeInput = document.getElementById('messages-compose-input');
+    if (!composeInput) return;
+    const text = composeInput.value.trim();
+    if (!text) {
+        showToast('Message cannot be empty.', 'error');
+        return;
+    }
+
+    appendMessage(activeThreadId, currentUser.role, currentUser.email, text);
+    threadDrafts[activeThreadId] = '';
+    composeInput.value = '';
+    renderMessagesPage();
 }
 
 function goBackToDashboard() {
